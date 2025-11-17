@@ -1,5 +1,5 @@
-# Exclude home folder
-lib/presentation/pages/home/
+# Exclude home_screen.dart file only
+lib/presentation/pages/home/home_screen.dart
 
 # Flutter/Dart/Pub related
 **/doc/api/

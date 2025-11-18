@@ -1,5 +1,28 @@
-# Exclude home_screen.dart file only
-lib/presentation/pages/home/home_screen.dart
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.xcuserstate
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -7,13 +30,9 @@ lib/presentation/pages/home/home_screen.dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.packages
 .pub-cache/
 .pub/
 /build/
-
-# Web related
-lib/generated_plugin_registrant.dart
 
 # Symbolication related
 app.*.symbols
@@ -25,3 +44,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase configs and secrets.
+android/app/google-services.json
+android/key.properties
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+firebase.json
+.env
+
+# VS Code settings folder
+.vscode/

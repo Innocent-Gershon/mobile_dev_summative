@@ -47,7 +47,6 @@ class EduBridgeApp extends StatelessWidget {
         routes: {
           '/home': (context) => const HomeScreen(),
           '/login': (context) => const LoginPage(),
-
           '/email-verification': (context) => const EmailVerificationScreen(email: ''),
         },
       ),

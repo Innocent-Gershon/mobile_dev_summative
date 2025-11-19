@@ -20,3 +20,25 @@ UserType stringToUserType(String roleString) {
       return UserType.guest;
   }
 }
+
+class Task {
+  final String id;
+  final String title;
+  final String description;
+  final String priority;
+  final Color priorityColor;
+  final String dueDate;
+  final List<String> tags;
+  bool isCompleted;
+
+  Task({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.priority,
+    required this.priorityColor,
+    required this.dueDate,
+    required this.tags,
+    this.isCompleted = false,
+  });
+}

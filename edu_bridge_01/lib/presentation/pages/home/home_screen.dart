@@ -1,3 +1,50 @@
+Here is the file 
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
+
+enum UserType { teacher, student, parent, guest }
+
+UserType stringToUserType(String roleString) {
+  switch (roleString.toLowerCase()) {
+    case 'student':
+      return UserType.student;
+    case 'teacher':
+      return UserType.teacher;
+    case 'parent':
+      return UserType.parent;
+    case 'admin':
+      return UserType.teacher;
+    default:
+      return UserType.guest;
+  }
+}
+
+class Task {
+  final String id;
+  final String title;
+  final String description;
+  final String priority;
+  final Color priorityColor;
+  final String dueDate;
+  final List<String> tags;
+  bool isCompleted;
+
+  Task({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.priority,
+    required this.priorityColor,
+    required this.dueDate,
+    required this.tags,
+    this.isCompleted = false,
+  });
+}
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -734,3 +781,166 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       ),
     );
   }
+  
+  void _markTaskCompleted(String taskId) {
+    setState(() {
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+      if (taskIndex != -1) {
+        _tasks[taskIndex].isCompleted = true;
+      }
+    });
+  }
+
+  Widget _buildTag(String text, [bool isCompleted = false]) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isCompleted ? const Color(0xFFE8E8E8) : const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: isCompleted ? const Color(0xFF8E8E93) : const Color(0xFF1A1A1A),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentUpdatesSection() {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Text(
+        'Recent Updates',
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF1A1A1A),
+          height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(Icons.home_rounded, 'Home', 0),
+              _buildNavItem(Icons.chat_bubble_rounded, 'Chats', 1),
+              _buildNavItem(Icons.school_rounded, 'Classes', 2),
+              _buildNavItem(Icons.settings_rounded, 'Settings', 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isActive = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? const Color(0xFF3366FF) : const Color(0xFF8E8E93),
+              size: 26,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? const Color(0xFF3366FF) : const Color(0xFF8E8E93),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showAllCategoriesBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text(
+                'All Categories',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                padding: const EdgeInsets.all(20),
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  _buildCategoryCard('Assignment', 'To Review', 'Due Today: 3', 0.6, '60%'),
+                  _buildCategoryCard('Attendance', 'Track Now', '87% This Week', 0.75, '75%'),
+                  _buildCategoryCard('Grades', 'Check Now', 'Latest: A+', 0.9, '90%'),
+                  _buildCategoryCard('Schedule', 'Today', 'Next: Math', 0.4, '40%'),
+                  _buildCategoryCard('Library', 'Books', '5 Borrowed', 0.3, '30%'),
+                  _buildCategoryCard('Events', 'Upcoming', 'Sports Day', 0.8, '80%'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

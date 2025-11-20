@@ -183,6 +183,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     
     try {
+      // For parents, validate student exists first
+      if (event.userType == 'Parent' && event.additionalData?['childName'] != null) {
+        final studentName = event.additionalData!['childName'] as String;
+        final studentExists = await _authRepository.isStudentRegistered(studentName);
+        
+        if (!studentExists) {
+          emit(AuthError('STUDENT_NOT_FOUND:$studentName'));
+          return;
+        }
+      }
+      
       final userCredential = await _authRepository.createUserWithEmailAndPassword(
         email: event.email,
         password: event.password,
@@ -198,9 +209,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           additionalData: event.additionalData,
         );
         
-        // Send email verification
-        await user.sendEmailVerification();
-        emit(AuthEmailVerificationSent(event.email));
+        // Skip email verification for parents and go directly to home
+        if (event.userType == 'Parent') {
+          emit(AuthAuthenticated(
+            userId: user.uid,
+            email: event.email,
+            name: event.fullName,
+            userType: event.userType,
+          ));
+        } else {
+          await user.sendEmailVerification();
+          emit(AuthEmailVerificationSent(event.email));
+        }
       } else {
         emit(const AuthError('Sign up failed'));
       }

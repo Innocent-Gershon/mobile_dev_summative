@@ -24,9 +24,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _confirmPasswordController = TextEditingController();
   final _studentIdController = TextEditingController();
   final _employeeIdController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _childNameController = TextEditingController();
-  final _childClassController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _selectedUserType = AppConstants.student;
@@ -40,9 +38,7 @@ class _SignUpPageState extends State<SignUpPage> {
     _confirmPasswordController.dispose();
     _studentIdController.dispose();
     _employeeIdController.dispose();
-    _phoneController.dispose();
     _childNameController.dispose();
-    _childClassController.dispose();
     super.dispose();
   }
 
@@ -80,21 +76,28 @@ class _SignUpPageState extends State<SignUpPage> {
           if (state is AuthError) {
             String displayMessage = state.message;
             bool shouldShowDialog = false;
+            bool isStudentNotFound = false;
+            String studentName = '';
             
             if (state.message.startsWith('SHOW_LOGIN_DIALOG:')) {
               displayMessage = state.message.substring('SHOW_LOGIN_DIALOG:'.length);
               shouldShowDialog = true;
+            } else if (state.message.startsWith('STUDENT_NOT_FOUND:')) {
+              studentName = state.message.substring('STUDENT_NOT_FOUND:'.length);
+              isStudentNotFound = true;
             }
             
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(displayMessage),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            );
+            if (!isStudentNotFound) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(displayMessage),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }
             
             if (shouldShowDialog) {
               Future.delayed(const Duration(milliseconds: 800), () {
@@ -126,6 +129,42 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 );
               });
+            } else if (isStudentNotFound) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  title: Row(
+                    children: [
+                      const Icon(Icons.person_search, color: Colors.orange),
+                      const SizedBox(width: 10),
+                      const Text('Student Not Found'),
+                    ],
+                  ),
+                  content: Text(
+                    'No student named "$studentName" is registered in our system. Would you like to register your student first?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Try Again'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // TODO: Navigate to student registration
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Student registration coming soon!'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      },
+                      child: const Text('Register Student'),
+                    ),
+                  ],
+                ),
+              );
             }
           } else if (state is AuthAuthenticated) {
             Navigator.of(context).pushNamedAndRemoveUntil(
@@ -405,12 +444,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                         additionalData['employeeId'] =
                                             _employeeIdController.text.trim();
                                       } else if (_selectedUserType == AppConstants.parent) {
-                                        additionalData['phoneNumber'] =
-                                            _phoneController.text.trim();
                                         additionalData['childName'] =
                                             _childNameController.text.trim();
-                                        additionalData['childClass'] =
-                                            _childClassController.text.trim();
                                       }
 
                                       context.read<AuthBloc>().add(
@@ -738,50 +773,18 @@ class _SignUpPageState extends State<SignUpPage> {
     return [
       const SizedBox(height: 16),
       TextFormField(
-        controller: _phoneController,
-        keyboardType: TextInputType.phone,
-        decoration: const InputDecoration(
-          labelText: AppConstants.phoneNumber,
-          prefixIcon: Icon(Icons.phone_outlined),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter your phone number';
-          }
-          if (!RegExp(r'^[+]?[0-9]{10,15}$')
-              .hasMatch(value.replaceAll(RegExp(r'[\s-()]'), ''))) {
-            return 'Please enter a valid phone number';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 16),
-      TextFormField(
         controller: _childNameController,
         decoration: const InputDecoration(
-          labelText: AppConstants.childName,
+          labelText: 'Student Name',
           prefixIcon: Icon(Icons.child_care_outlined),
+          helperText: 'Enter the exact name of your registered student',
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Please enter your child\'s name';
+            return 'Please enter your student\'s name';
           }
           if (value.length < 2) {
             return 'Name must be at least 2 characters';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 16),
-      TextFormField(
-        controller: _childClassController,
-        decoration: const InputDecoration(
-          labelText: AppConstants.childClass,
-          prefixIcon: Icon(Icons.class_outlined),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter your child\'s class';
           }
           return null;
         },

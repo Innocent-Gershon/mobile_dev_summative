@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../classes/classes_screen.dart';
+import '../../../data/repositories/auth_repository.dart';
 
 enum UserType { teacher, student, parent, guest }
 
@@ -57,6 +58,7 @@ class HomeScreen extends StatelessWidget {
             userType: userType,
             userName: state.name,
             userEmail: state.email,
+            userId: state.userId,
           );
         }
 
@@ -77,12 +79,14 @@ class _HomeScreenContent extends StatefulWidget {
   final UserType userType;
   final String userName;
   final String userEmail;
+  final String userId;
 
   const _HomeScreenContent({
     super.key,
     required this.userType,
     required this.userName,
     required this.userEmail,
+    required this.userId,
   });
 
   @override
@@ -92,6 +96,32 @@ class _HomeScreenContent extends StatefulWidget {
 class _HomeScreenContentState extends State<_HomeScreenContent> {
   int _selectedIndex = 0;
   int _taskTabIndex = 0; // 0 for Active, 1 for Completed
+  String? _studentName;
+  bool _isLoadingStudentData = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    if (widget.userType == UserType.parent) {
+      _loadStudentData();
+    }
+  }
+  
+  Future<void> _loadStudentData() async {
+    setState(() => _isLoadingStudentData = true);
+    try {
+      // Get parent's data to find student name
+      final authRepository = RepositoryProvider.of<AuthRepository>(context);
+      final userData = await authRepository.getUserData(widget.userId);
+      if (userData != null && userData['childName'] != null) {
+        setState(() => _studentName = userData['childName']);
+      }
+    } catch (e) {
+      // Handle error silently
+    } finally {
+      setState(() => _isLoadingStudentData = false);
+    }
+  }
   
   List<Task> _tasks = [
     Task(
@@ -137,6 +167,19 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
     
     return 'User';
+  }
+  
+  String _getWelcomeMessage() {
+    if (widget.userType == UserType.parent) {
+      if (_studentName != null) {
+        return 'Tracking $_studentName\'s Progress';
+      } else if (_isLoadingStudentData) {
+        return 'Loading student info...';
+      } else {
+        return 'Parent Dashboard';
+      }
+    }
+    return 'Welcome Back!';
   }
 
   @override
@@ -209,9 +252,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome Back!',
-                  style: TextStyle(
+                Text(
+                  _getWelcomeMessage(),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: Color(0xFF1A1A1A),
@@ -300,9 +343,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Categories',
-                style: TextStyle(
+              Text(
+                widget.userType == UserType.parent && _studentName != null 
+                    ? '$_studentName\'s Progress' 
+                    : 'Categories',
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF1A1A1A),
@@ -502,9 +547,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'My Task',
-            style: TextStyle(
+          Text(
+            widget.userType == UserType.parent && _studentName != null 
+                ? '$_studentName\'s Tasks' 
+                : 'My Task',
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
               color: Color(0xFF1A1A1A),

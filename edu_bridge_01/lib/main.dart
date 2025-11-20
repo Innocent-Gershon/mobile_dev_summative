@@ -12,7 +12,7 @@ import 'presentation/pages/splash/splash_screen.dart';
 import 'presentation/pages/home/home_screen.dart';
 import 'presentation/pages/auth/login_screen.dart';
 import 'presentation/pages/auth/email_verification_screen.dart';
-
+import 'presentation/pages/classes/classes_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,9 @@ class EduBridgeApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => SplashBloc()),
-        BlocProvider(create: (context) => AuthBloc(authRepository: AuthRepository())),
+        BlocProvider(
+          create: (context) => AuthBloc(authRepository: AuthRepository()),
+        ),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
@@ -47,7 +49,8 @@ class EduBridgeApp extends StatelessWidget {
         routes: {
           '/home': (context) => const HomeScreen(),
           '/login': (context) => const LoginPage(),
-          '/email-verification': (context) => const EmailVerificationScreen(email: ''),
+          '/email-verification': (context) =>
+              const EmailVerificationScreen(email: ''),
         },
       ),
     );

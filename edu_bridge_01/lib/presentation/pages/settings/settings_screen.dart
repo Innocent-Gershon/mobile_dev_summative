@@ -13,10 +13,33 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStateMixin {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
   bool _biometricEnabled = false;
+  bool _autoBackupEnabled = true;
+  bool _dataUsageOptimized = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +65,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              _buildAppBar(),
-              SliverToBoxAdapter(child: _buildProfileSection(authState)),
-              SliverToBoxAdapter(child: _buildSettingsSection()),
-              SliverToBoxAdapter(child: _buildAccountSection()),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                _buildAppBar(),
+                SliverToBoxAdapter(child: _buildProfileSection(authState)),
+                SliverToBoxAdapter(child: _buildQuickActionsSection()),
+                SliverToBoxAdapter(child: _buildSettingsSection()),
+                SliverToBoxAdapter(child: _buildDataPrivacySection()),
+                SliverToBoxAdapter(child: _buildSupportSection()),
+                SliverToBoxAdapter(child: _buildAccountSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
+            ),
           ),
         ),
       ),
@@ -104,100 +134,243 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withOpacity(0.8),
+            AppColors.secondary.withOpacity(0.9),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.border, width: 2),
-            ),
-            child: ClipOval(
-              child: Container(
-                color: const Color(0xFFFFE4E1),
-                child: Center(
-                  child: Text(
-                    displayName[0].toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
+          Positioned(
+            top: -20,
+            right: -20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
               children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  authState.email,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    authState.userType,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                  child: ClipOval(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.9),
+                            Colors.white.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          displayName[0].toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        authState.email,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          authState.userType.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: _editProfile,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                    ),
+                    child: const Icon(
+                      Icons.edit_rounded,
+                      color: Colors.white,
+                      size: 22,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          GestureDetector(
-            onTap: _editProfile,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.edit_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildQuickActionCard(
+              icon: Icons.notifications_active_rounded,
+              title: 'Notifications',
+              subtitle: '${_notificationsEnabled ? 'On' : 'Off'}',
+              color: const Color(0xFF34C759),
+              onTap: () => setState(() => _notificationsEnabled = !_notificationsEnabled),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildQuickActionCard(
+              icon: Icons.security_rounded,
+              title: 'Security',
+              subtitle: 'Manage',
+              color: const Color(0xFFFF9500),
+              onTap: _openPrivacySettings,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildQuickActionCard(
+              icon: Icons.backup_rounded,
+              title: 'Backup',
+              subtitle: '${_autoBackupEnabled ? 'Auto' : 'Manual'}',
+              color: const Color(0xFF007AFF),
+              onTap: () => setState(() => _autoBackupEnabled = !_autoBackupEnabled),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 20,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -207,71 +380,260 @@ class _SettingsScreenState extends State<SettingsScreen> {
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
-            child: Text(
-              'Preferences',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.tune_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'App Preferences',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
-          _buildSettingItem(
-            icon: Icons.notifications_rounded,
-            title: 'Notifications',
-            subtitle: 'Push notifications and alerts',
-            trailing: Switch(
-              value: _notificationsEnabled,
-              onChanged: (value) => setState(() => _notificationsEnabled = value),
-              activeColor: AppColors.primary,
-            ),
+          _buildAdvancedSettingItem(
+            icon: Icons.notifications_active_rounded,
+            title: 'Push Notifications',
+            subtitle: 'Receive alerts and updates',
+            value: _notificationsEnabled,
+            onChanged: (value) => setState(() => _notificationsEnabled = value),
+            iconColor: const Color(0xFF34C759),
           ),
-          _buildDivider(),
-          _buildSettingItem(
+          _buildAdvancedSettingItem(
             icon: Icons.dark_mode_rounded,
-            title: 'Dark Mode',
-            subtitle: 'Switch to dark theme',
-            trailing: Switch(
-              value: _darkModeEnabled,
-              onChanged: (value) => setState(() => _darkModeEnabled = value),
-              activeColor: AppColors.primary,
-            ),
+            title: 'Dark Theme',
+            subtitle: 'Reduce eye strain in low light',
+            value: _darkModeEnabled,
+            onChanged: (value) => setState(() => _darkModeEnabled = value),
+            iconColor: const Color(0xFF8E8E93),
           ),
-          _buildDivider(),
-          _buildSettingItem(
+          _buildAdvancedSettingItem(
             icon: Icons.fingerprint_rounded,
-            title: 'Biometric Login',
-            subtitle: 'Use fingerprint or face ID',
-            trailing: Switch(
-              value: _biometricEnabled,
-              onChanged: (value) => setState(() => _biometricEnabled = value),
-              activeColor: AppColors.primary,
-            ),
+            title: 'Biometric Authentication',
+            subtitle: 'Secure login with biometrics',
+            value: _biometricEnabled,
+            onChanged: (value) => setState(() => _biometricEnabled = value),
+            iconColor: const Color(0xFFFF9500),
           ),
-          _buildDivider(),
           _buildSettingItem(
             icon: Icons.language_rounded,
-            title: 'Language',
-            subtitle: 'English (US)',
+            title: 'Language & Region',
+            subtitle: 'English (United States)',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '🇺🇸',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+              ],
+            ),
+            onTap: _changeLanguage,
+            iconColor: const Color(0xFF007AFF),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataPrivacySection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9500).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.shield_rounded,
+                    color: Color(0xFFFF9500),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Data & Privacy',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildAdvancedSettingItem(
+            icon: Icons.backup_rounded,
+            title: 'Auto Backup',
+            subtitle: 'Automatically backup your data',
+            value: _autoBackupEnabled,
+            onChanged: (value) => setState(() => _autoBackupEnabled = value),
+            iconColor: const Color(0xFF007AFF),
+          ),
+          _buildAdvancedSettingItem(
+            icon: Icons.data_usage_rounded,
+            title: 'Data Usage Optimization',
+            subtitle: 'Reduce mobile data consumption',
+            value: _dataUsageOptimized,
+            onChanged: (value) => setState(() => _dataUsageOptimized = value),
+            iconColor: const Color(0xFF34C759),
+          ),
+          _buildSettingItem(
+            icon: Icons.privacy_tip_rounded,
+            title: 'Privacy Policy',
+            subtitle: 'Review our privacy practices',
+            trailing: const Icon(
+              Icons.open_in_new_rounded,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+            onTap: _openPrivacyPolicy,
+            iconColor: const Color(0xFFFF3B30),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSupportSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF34C759).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.support_agent_rounded,
+                    color: Color(0xFF34C759),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Help & Support',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildSettingItem(
+            icon: Icons.help_center_rounded,
+            title: 'Help Center',
+            subtitle: 'Find answers to common questions',
             trailing: const Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textSecondary,
+              size: 20,
             ),
-            onTap: _changeLanguage,
+            onTap: _openHelpCenter,
+            iconColor: const Color(0xFF007AFF),
+          ),
+          _buildSettingItem(
+            icon: Icons.chat_bubble_rounded,
+            title: 'Contact Support',
+            subtitle: 'Get help from our support team',
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+            onTap: _contactSupport,
+            iconColor: const Color(0xFF34C759),
+          ),
+          _buildSettingItem(
+            icon: Icons.bug_report_rounded,
+            title: 'Report a Bug',
+            subtitle: 'Help us improve the app',
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+            onTap: _reportBug,
+            iconColor: const Color(0xFFFF9500),
           ),
           const SizedBox(height: 8),
         ],
@@ -284,72 +646,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
-            child: Text(
-              'Account',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.account_circle_rounded,
+                    color: AppColors.error,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Account Management',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildSettingItem(
+            icon: Icons.info_outline_rounded,
+            title: 'About EduBridge',
+            subtitle: 'Version 1.0.0 • Learn more',
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+            onTap: _showAbout,
+            iconColor: const Color(0xFF007AFF),
+          ),
+          _buildSettingItem(
+            icon: Icons.star_rate_rounded,
+            title: 'Rate EduBridge',
+            subtitle: 'Share your experience with others',
+            trailing: const Icon(
+              Icons.open_in_new_rounded,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+            onTap: _rateApp,
+            iconColor: const Color(0xFFFFCC00),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  AppColors.border.withOpacity(0.5),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
           _buildSettingItem(
-            icon: Icons.security_rounded,
-            title: 'Privacy & Security',
-            subtitle: 'Manage your privacy settings',
-            trailing: const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-            ),
-            onTap: _openPrivacySettings,
-          ),
-          _buildDivider(),
-          _buildSettingItem(
-            icon: Icons.help_rounded,
-            title: 'Help & Support',
-            subtitle: 'Get help and contact support',
-            trailing: const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-            ),
-            onTap: _openHelp,
-          ),
-          _buildDivider(),
-          _buildSettingItem(
-            icon: Icons.info_rounded,
-            title: 'About',
-            subtitle: 'App version and information',
-            trailing: const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-            ),
-            onTap: _showAbout,
-          ),
-          _buildDivider(),
-          _buildSettingItem(
             icon: Icons.logout_rounded,
             title: 'Sign Out',
-            subtitle: 'Sign out of your account',
+            subtitle: 'Sign out of your account securely',
             trailing: const Icon(
               Icons.chevron_right_rounded,
               color: AppColors.error,
+              size: 20,
             ),
             onTap: _showLogoutDialog,
             titleColor: AppColors.error,
+            iconColor: AppColors.error,
           ),
           const SizedBox(height: 8),
         ],
@@ -364,24 +750,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Widget? trailing,
     VoidCallback? onTap,
     Color? titleColor,
+    Color? iconColor,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
+                color: (iconColor ?? AppColors.primary).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: AppColors.primary,
-                size: 20,
+                color: iconColor ?? AppColors.primary,
+                size: 22,
               ),
             ),
             const SizedBox(width: 16),
@@ -397,12 +784,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: titleColor ?? AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       color: AppColors.textSecondary,
+                      height: 1.2,
                     ),
                   ),
                 ],
@@ -411,6 +799,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (trailing != null) trailing,
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAdvancedSettingItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Transform.scale(
+            scale: 0.9,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: iconColor,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -505,16 +957,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _openPrivacySettings() {
-    // TODO: Navigate to privacy settings
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Privacy settings coming soon')),
-    );
+    _showFeatureDialog('Privacy & Security', 'Manage your account security, two-factor authentication, and privacy preferences.');
   }
 
-  void _openHelp() {
-    // TODO: Navigate to help screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Help & support coming soon')),
+  void _openPrivacyPolicy() {
+    _showFeatureDialog('Privacy Policy', 'Review how we collect, use, and protect your personal information.');
+  }
+
+  void _openHelpCenter() {
+    _showFeatureDialog('Help Center', 'Browse our comprehensive help articles and tutorials.');
+  }
+
+  void _contactSupport() {
+    _showFeatureDialog('Contact Support', 'Get personalized help from our support team via chat or email.');
+  }
+
+  void _reportBug() {
+    _showFeatureDialog('Report Bug', 'Help us improve EduBridge by reporting issues you encounter.');
+  }
+
+  void _rateApp() {
+    _showFeatureDialog('Rate EduBridge', 'Share your experience and help other users discover our app.');
+  }
+
+  void _showFeatureDialog(String title, String description) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          description,
+          style: const TextStyle(
+            fontSize: 15,
+            color: AppColors.textSecondary,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Coming Soon',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

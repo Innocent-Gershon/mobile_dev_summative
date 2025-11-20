@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../classes/classes_screen.dart';
+import '../settings/settings_screen.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 enum UserType { teacher, student, parent, guest }
@@ -911,6 +912,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const ClassesScreen(),
+            ),
+          );
+        } else if (index == 3) { // Settings tab
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SettingsScreen(),
             ),
           );
         } else {

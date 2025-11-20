@@ -5,6 +5,9 @@ import '../../../data/models/class_model.dart';
 import '../../bloc/classes/classes_bloc.dart';
 import '../../bloc/classes/classes_event.dart';
 import '../../bloc/classes/classes_state.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
+import '../assignments/create_assignment_screen.dart';
 
 class ClassesScreen extends StatelessWidget {
   const ClassesScreen({super.key});
@@ -18,8 +21,17 @@ class ClassesScreen extends StatelessWidget {
   }
 }
 
-class ClassesView extends StatelessWidget {
+class ClassesView extends StatefulWidget {
   const ClassesView({super.key});
+
+  @override
+  State<ClassesView> createState() => _ClassesViewState();
+}
+
+class _ClassesViewState extends State<ClassesView> {
+  String _searchQuery = '';
+  bool _isSearching = false;
+  final _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +68,16 @@ class ClassesView extends StatelessWidget {
               ],
             ),
             child: IconButton(
-              icon: const Icon(Icons.search, color: Colors.black, size: 24),
-              onPressed: () {},
+              icon: Icon(_isSearching ? Icons.close : Icons.search, color: Colors.black, size: 24),
+              onPressed: () {
+                setState(() {
+                  _isSearching = !_isSearching;
+                  if (!_isSearching) {
+                    _searchQuery = '';
+                    _searchController.clear();
+                  }
+                });
+              },
             ),
           ),
           Container(
@@ -73,9 +93,29 @@ class ClassesView extends StatelessWidget {
                 ),
               ],
             ),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.black, size: 24),
-              onPressed: () {},
+            child: BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                return IconButton(
+                  icon: const Icon(Icons.add, color: Colors.black, size: 24),
+                  onPressed: () {
+                    if (state is AuthAuthenticated && state.userType == 'Teacher') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CreateAssignmentScreen(),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Only teachers can create assignments'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -83,32 +123,67 @@ class ClassesView extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 4, 20, 16),
-            child: Text(
-              'Track project across all subject',
-              style: TextStyle(
-                fontSize: 15,
-                color: Color(0xFF8E8E93),
-                fontWeight: FontWeight.w400,
+          if (_isSearching)
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search classes by subject...',
+                  prefixIcon: Icon(Icons.search, color: Color(0xFF8E8E93)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: (value) {
+                  setState(() => _searchQuery = value);
+                },
+              ),
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 4, 20, 16),
+              child: Text(
+                'Track project across all subject',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF8E8E93),
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
-          ),
           Expanded(
             child: BlocBuilder<ClassesBloc, ClassesState>(
               builder: (context, state) {
                 if (state is ClassesLoading) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state is ClassesLoaded) {
+                  final filteredClasses = _searchQuery.isEmpty
+                      ? state.classes
+                      : state.classes.where((cls) => 
+                          cls.name.toLowerCase().contains(_searchQuery.toLowerCase())
+                        ).toList();
+                  
                   return RefreshIndicator(
                     onRefresh: () async {
                       context.read<ClassesBloc>().add(RefreshClasses());
                     },
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: state.classes.length,
+                      itemCount: filteredClasses.length,
                       itemBuilder: (context, index) {
-                        return ClassCard(classModel: state.classes[index]);
+                        return ClassCard(classModel: filteredClasses[index]);
                       },
                     ),
                   );
@@ -128,6 +203,12 @@ class ClassesView extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 }
 
 class ClassCard extends StatelessWidget {
@@ -143,10 +224,7 @@ class ClassCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _getCardColor(),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.black.withOpacity(0.15),
-          width: 2,
-        ),
+        border: Border.all(color: Colors.black.withOpacity(0.15), width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
@@ -272,7 +350,10 @@ class ClassCard extends StatelessWidget {
             child: TextButton(
               onPressed: () {},
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

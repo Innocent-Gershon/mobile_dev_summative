@@ -12,7 +12,6 @@ import 'presentation/pages/splash/splash_screen.dart';
 import 'presentation/pages/home/home_screen.dart';
 import 'presentation/pages/auth/login_screen.dart';
 import 'presentation/pages/auth/email_verification_screen.dart';
-import 'presentation/pages/classes/classes_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

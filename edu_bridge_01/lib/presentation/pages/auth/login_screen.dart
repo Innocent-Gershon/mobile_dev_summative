@@ -260,7 +260,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.blue.withValues(alpha: 0.4),
+                                      color: Colors.blue.withOpacity(0.4),
                                       blurRadius: 15,
                                       offset: const Offset(0, 8),
                                     ),
@@ -670,9 +670,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      color: Colors.black.withValues(
-                        alpha: 0.0,
-                      ), // Initially transparent
+                      color: Colors.black.withOpacity(0.0), // Initially transparent
                       // A BackdropFilter here will blur everything below it.
                       // Since this is above the main content, it blurs the main content.
                       child: BackdropFilter(
@@ -681,9 +679,7 @@ class _LoginPageState extends State<LoginPage> {
                           sigmaY: 5.0,
                         ), // Apply blur
                         child: Container(
-                          color: Colors.black.withValues(
-                            alpha: 0.1,
-                          ), // Light overlay color
+                          color: Colors.black.withOpacity(0.1), // Light overlay color
                         ),
                       ),
                     ),
@@ -701,10 +697,10 @@ class _LoginPageState extends State<LoginPage> {
                       width: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: Colors.white.withOpacity(0.95),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: Colors.black.withOpacity(0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -806,7 +802,7 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _selectedUserType == value
-              ? Colors.blue.withValues(alpha: 0.1)
+              ? Colors.blue.withOpacity(0.1)
               : Colors.transparent,
         ),
         child: Row(

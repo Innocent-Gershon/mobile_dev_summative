@@ -24,26 +24,59 @@ class ClassesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: const Color(0xFFF5F5F5),
         elevation: 0,
-        title: const Text(
-          'My Classes',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+        toolbarHeight: 80,
+        title: const Padding(
+          padding: EdgeInsets.only(left: 4.0),
+          child: Text(
+            'My Classes',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              letterSpacing: -0.5,
+            ),
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: AppColors.textPrimary),
-            onPressed: () {},
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.search, color: Colors.black, size: 24),
+              onPressed: () {},
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.add, color: AppColors.textPrimary),
-            onPressed: () {},
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.add, color: Colors.black, size: 24),
+              onPressed: () {},
+            ),
           ),
         ],
       ),
@@ -51,16 +84,16 @@ class ClassesView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingMedium),
+            padding: EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: Text(
               'Track project across all subject',
               style: TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondary,
+                fontSize: 15,
+                color: Color(0xFF8E8E93),
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
-          const SizedBox(height: AppDimensions.paddingLarge),
           Expanded(
             child: BlocBuilder<ClassesBloc, ClassesState>(
               builder: (context, state) {
@@ -72,7 +105,7 @@ class ClassesView extends StatelessWidget {
                       context.read<ClassesBloc>().add(RefreshClasses());
                     },
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMedium),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: state.classes.length,
                       itemBuilder: (context, index) {
                         return ClassCard(classModel: state.classes[index]);
@@ -83,7 +116,7 @@ class ClassesView extends StatelessWidget {
                   return Center(
                     child: Text(
                       'Error: ${state.message}',
-                      style: const TextStyle(color: AppColors.error),
+                      style: const TextStyle(color: Colors.red),
                     ),
                   );
                 }
@@ -105,16 +138,25 @@ class ClassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppDimensions.paddingMedium),
-      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: _getCardColor(),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.black.withOpacity(0.15),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -124,20 +166,24 @@ class ClassCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.black.withOpacity(0.1),
+                    width: 1.5,
+                  ),
                 ),
                 child: Center(
                   child: Text(
                     classModel.icon,
-                    style: const TextStyle(fontSize: 20),
+                    style: const TextStyle(fontSize: 26),
                   ),
                 ),
               ),
-              const SizedBox(width: AppDimensions.paddingMedium),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,16 +191,19 @@ class ClassCard extends StatelessWidget {
                     Text(
                       classModel.name,
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: Colors.black,
+                        letterSpacing: -0.3,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       classModel.teacher,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: Colors.black.withOpacity(0.6),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -162,66 +211,87 @@ class ClassCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.paddingMedium),
+          const SizedBox(height: 18),
           const Text(
             'Progress',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Colors.black,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: LinearProgressIndicator(
-                  value: classModel.progress,
-                  backgroundColor: Colors.white.withOpacity(0.3),
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
-                  minHeight: 6,
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: classModel.progress,
+                      child: Container(
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6B6B),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppDimensions.paddingSmall),
+              const SizedBox(width: 10),
               Text(
                 '${(classModel.progress * 100).toInt()}%',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: Colors.black,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.paddingMedium),
+          const SizedBox(height: 14),
           Text(
             'Next: ${classModel.nextAssignment}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Colors.black.withOpacity(0.6),
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: AppDimensions.paddingMedium),
+          const SizedBox(height: 14),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {},
-              child: const Row(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  const Text(
                     'View Details',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Colors.black,
                     ),
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Icon(
                     Icons.arrow_forward,
-                    size: 16,
-                    color: AppColors.textPrimary,
+                    size: 17,
+                    color: Colors.black.withOpacity(0.8),
                   ),
                 ],
               ),
@@ -235,13 +305,13 @@ class ClassCard extends StatelessWidget {
   Color _getCardColor() {
     switch (classModel.color) {
       case 'green':
-        return const Color(0xFFE8F5E8);
+        return const Color(0xFFB8C5AE);
       case 'blue':
-        return const Color(0xFFE3F2FD);
+        return const Color(0xFF9EAFB8);
       case 'brown':
-        return const Color(0xFFF3E5AB);
+        return const Color(0xFFD4C5A6);
       default:
-        return AppColors.surface;
+        return const Color(0xFFE5E5E5);
     }
   }
 }

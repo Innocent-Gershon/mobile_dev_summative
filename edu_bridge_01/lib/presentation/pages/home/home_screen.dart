@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../classes/classes_screen.dart';
 
 enum UserType { teacher, student, parent, guest }
 
@@ -858,7 +859,17 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isActive = _selectedIndex == index;
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        if (index == 2) { // Classes tab
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ClassesScreen(),
+            ),
+          );
+        } else {
+          setState(() => _selectedIndex = index);
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(

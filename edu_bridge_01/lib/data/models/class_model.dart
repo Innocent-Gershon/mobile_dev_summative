@@ -3,10 +3,10 @@ class ClassModel {
   final String name;
   final String teacher;
   final String subject;
+  final String icon;
   final double progress;
   final String nextAssignment;
   final String dueDate;
-  final String icon;
   final String color;
 
   ClassModel({
@@ -14,10 +14,10 @@ class ClassModel {
     required this.name,
     required this.teacher,
     required this.subject,
+    required this.icon,
     required this.progress,
     required this.nextAssignment,
     required this.dueDate,
-    required this.icon,
     required this.color,
   });
 
@@ -27,11 +27,11 @@ class ClassModel {
       name: json['name'] ?? '',
       teacher: json['teacher'] ?? '',
       subject: json['subject'] ?? '',
-      progress: (json['progress'] ?? 0).toDouble(),
+      icon: json['icon'] ?? '📚',
+      progress: (json['progress'] ?? 0.0).toDouble(),
       nextAssignment: json['nextAssignment'] ?? '',
       dueDate: json['dueDate'] ?? '',
-      icon: json['icon'] ?? '',
-      color: json['color'] ?? '',
+      color: json['color'] ?? 'blue',
     );
   }
 
@@ -41,10 +41,10 @@ class ClassModel {
       'name': name,
       'teacher': teacher,
       'subject': subject,
+      'icon': icon,
       'progress': progress,
       'nextAssignment': nextAssignment,
       'dueDate': dueDate,
-      'icon': icon,
       'color': color,
     };
   }

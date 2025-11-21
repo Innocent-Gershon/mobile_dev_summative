@@ -10,9 +10,18 @@ class ChatRepository {
         .where('participants', arrayContains: userId)
         .orderBy('lastMessageTime', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ChatModel.fromMap({...doc.data(), 'id': doc.id}))
-            .toList());
+        .map((snapshot) {
+          if (snapshot.docs.isEmpty) {
+            return <ChatModel>[];
+          }
+          return snapshot.docs
+              .map((doc) => ChatModel.fromMap({...doc.data(), 'id': doc.id}))
+              .toList();
+        })
+        .handleError((error) {
+          print('Error loading chats: $error');
+          return <ChatModel>[];
+        });
   }
 
   Stream<List<MessageModel>> getMessages(String chatId) {

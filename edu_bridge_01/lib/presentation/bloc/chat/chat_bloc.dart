@@ -22,8 +22,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       await _chatsSubscription?.cancel();
       _chatsSubscription = chatRepository.getChats(event.userId).listen(
-        (chats) => emit(ChatsLoaded(chats)),
-        onError: (error) => emit(ChatError(error.toString())),
+        (chats) {
+          emit(ChatsLoaded(chats));
+        },
+        onError: (error) {
+          emit(ChatError(error.toString()));
+        },
       );
     } catch (e) {
       emit(ChatError(e.toString()));

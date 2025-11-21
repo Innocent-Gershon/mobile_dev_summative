@@ -38,7 +38,9 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
   @override
   void initState() {
     super.initState();
-    _loadChats();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadChats();
+    });
   }
 
   void _loadChats() {
@@ -185,6 +187,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
           );
         }
 
+        // Default to empty state if no specific state matches
         return _buildEmptyState();
       },
     );

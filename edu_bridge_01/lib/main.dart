@@ -5,9 +5,11 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'data/repositories/auth_repository.dart';
+import 'data/repositories/chat_repository.dart';
 import 'presentation/bloc/splash/splash_bloc.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/auth/auth_state.dart';
+import 'presentation/bloc/chat/chat_bloc.dart';
 import 'presentation/pages/splash/splash_screen.dart';
 import 'presentation/pages/home/home_screen.dart';
 import 'presentation/pages/auth/login_screen.dart';
@@ -30,6 +32,11 @@ class EduBridgeApp extends StatelessWidget {
         BlocProvider(
           create: (context) => AuthBloc(authRepository: AuthRepository()),
         ),
+        BlocProvider(
+          create: (context) => ChatBloc(chatRepository: ChatRepository()),
+        ),
+        RepositoryProvider(create: (context) => AuthRepository()),
+        RepositoryProvider(create: (context) => ChatRepository()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,

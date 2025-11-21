@@ -370,7 +370,10 @@ class _NewChatContentState extends State<_NewChatContent> {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       final chatName = user['name'] ?? 'Chat';
-      final participants = [authState.userId, user['uid']];
+      final participants = <String>[
+        authState.userId.toString(),
+        (user['uid'] ?? '').toString(),
+      ];
       
       context.read<ChatBloc>().add(CreateChat(
         name: chatName,
@@ -385,17 +388,20 @@ class _NewChatContentState extends State<_NewChatContent> {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       final selectedUser = _searchResults.firstWhere(
-        (user) => user['uid'] != authState.userId,
-        orElse: () => {'name': 'Chat', 'uid': ''},
+        (user) => (user['uid'] ?? '').toString() != authState.userId.toString(),
+        orElse: () => <String, dynamic>{},
       );
-      
+
       final chat = ChatModel(
         id: chatId,
         name: selectedUser['name'] ?? 'Chat',
         lastMessage: '',
         lastMessageTime: DateTime.now(),
         lastMessageSender: '',
-        participants: [authState.userId, selectedUser['uid']],
+        participants: <String>[
+          authState.userId.toString(),
+          (selectedUser['uid'] ?? '').toString(),
+        ],
       );
 
       Navigator.of(context).pushReplacement(

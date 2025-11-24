@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../data/repositories/auth_repository.dart';
+import '../../../data/models/class_model.dart';
 
-class CreateAssignmentScreen extends StatefulWidget {
-  const CreateAssignmentScreen({super.key});
+class EditAssignmentScreen extends StatefulWidget {
+  final ClassModel assignment;
+
+  const EditAssignmentScreen({super.key, required this.assignment});
 
   @override
-  State<CreateAssignmentScreen> createState() => _CreateAssignmentScreenState();
+  State<EditAssignmentScreen> createState() => _EditAssignmentScreenState();
 }
 
-class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
+class _EditAssignmentScreenState extends State<EditAssignmentScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _subjectController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _subjectController;
   
   DateTime? _selectedDate;
   List<Map<String, dynamic>> _allStudents = [];
@@ -24,7 +25,31 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController(text: widget.assignment.nextAssignment);
+    _descriptionController = TextEditingController(text: widget.assignment.description);
+    _subjectController = TextEditingController(text: widget.assignment.name);
     _loadStudents();
+    _parseDueDate();
+  }
+
+  void _parseDueDate() {
+    try {
+      // Try to parse the due date from the assignment
+      final dueDateStr = widget.assignment.dueDate;
+      if (dueDateStr != 'Today' && dueDateStr != 'Tomorrow' && !dueDateStr.contains('days')) {
+        final parts = dueDateStr.split('/');
+        if (parts.length == 3) {
+          _selectedDate = DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[1]),
+            int.parse(parts[0]),
+          );
+        }
+      }
+    } catch (e) {
+      // If parsing fails, set to tomorrow as default
+      _selectedDate = DateTime.now().add(const Duration(days: 1));
+    }
   }
 
   Future<void> _loadStudents() async {
@@ -44,8 +69,20 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         };
       }).toList();
       
-      // Sort students by name
       _allStudents.sort((a, b) => a['name'].compareTo(b['name']));
+      
+      // Pre-select currently assigned students
+      _selectedStudents = widget.assignment.assignedStudents
+          .map((studentName) {
+            final student = _allStudents.firstWhere(
+              (s) => s['name'] == studentName,
+              orElse: () => {'uid': ''},
+            );
+            return student['uid'] as String;
+          })
+          .where((uid) => uid.isNotEmpty)
+          .toList();
+          
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,7 +111,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Create Assignment',
+          'Edit Assignment',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -93,7 +130,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
               const SizedBox(height: 20),
               _buildStudentSelectionCard(),
               const SizedBox(height: 30),
-              _buildCreateButton(),
+              _buildUpdateButton(),
             ],
           ),
         ),
@@ -282,12 +319,12 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
     );
   }
 
-  Widget _buildCreateButton() {
+  Widget _buildUpdateButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _createAssignment,
+        onPressed: _updateAssignment,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3366FF),
           shape: RoundedRectangleBorder(
@@ -295,7 +332,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           ),
         ),
         child: const Text(
-          'Create Assignment',
+          'Update Assignment',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -309,7 +346,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(const Duration(days: 7)),
+      initialDate: _selectedDate ?? DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
@@ -318,7 +355,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
     }
   }
 
-  Future<void> _createAssignment() async {
+  Future<void> _updateAssignment() async {
     if (_formKey.currentState!.validate() && _selectedDate != null && _selectedStudents.isNotEmpty) {
       try {
         final assignedStudentNames = _selectedStudents.map((studentId) {
@@ -326,32 +363,33 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           return student['name'];
         }).toList();
         
-        print('Assigned student names: $assignedStudentNames'); // Debug
-        
-        await FirebaseFirestore.instance.collection('assignments').add({
+        await FirebaseFirestore.instance
+            .collection('assignments')
+            .doc(widget.assignment.id)
+            .update({
           'title': _titleController.text,
           'subject': _subjectController.text,
           'description': _descriptionController.text,
           'dueDate': _selectedDate!.toIso8601String(),
           'assignedStudents': _selectedStudents,
           'assignedStudentNames': assignedStudentNames,
-          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
         });
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Assignment created successfully!'),
+              content: Text('Assignment updated successfully!'),
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context, true); // Return true to indicate success
+          Navigator.pop(context, true);
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error creating assignment: $e'),
+              content: Text('Error updating assignment: $e'),
               backgroundColor: Colors.red,
             ),
           );

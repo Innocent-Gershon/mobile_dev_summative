@@ -6,9 +6,11 @@ import '../../bloc/auth/auth_state.dart';
 import '../classes/classes_screen.dart';
 import '../settings/settings_screen.dart';
 import '../chat/chat_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../admin/management_screen.dart';
 import '../../../data/repositories/auth_repository.dart';
 
-enum UserType { teacher, student, parent, guest }
+enum UserType { teacher, student, parent, admin, guest }
 
 UserType stringToUserType(String roleString) {
   switch (roleString.toLowerCase()) {
@@ -19,7 +21,7 @@ UserType stringToUserType(String roleString) {
     case 'parent':
       return UserType.parent;
     case 'admin':
-      return UserType.teacher;
+      return UserType.admin;
     default:
       return UserType.guest;
   }
@@ -194,26 +196,34 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F9FA),
         body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                toolbarHeight: 80,
-                backgroundColor: const Color(0xFFF8F9FA),
-                elevation: 0,
-                automaticallyImplyLeading: false,
-                flexibleSpace: _buildProfileHeader(),
-              ),
-              SliverToBoxAdapter(child: _buildCategoriesSection()),
-              SliverToBoxAdapter(child: _buildMyTaskSection()),
-              SliverToBoxAdapter(child: _buildRecentUpdatesSection()),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
+          child: _selectedIndex == 0 
+              ? (widget.userType == UserType.admin 
+                  ? const AdminDashboardScreen()
+                  : _buildHomeContent())
+              : _buildHomeContent(),
         ),
         bottomNavigationBar: _buildBottomNav(),
       ),
+    );
+  }
+
+  Widget _buildHomeContent() {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          floating: false,
+          toolbarHeight: 80,
+          backgroundColor: const Color(0xFFF8F9FA),
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          flexibleSpace: _buildProfileHeader(),
+        ),
+        SliverToBoxAdapter(child: _buildCategoriesSection()),
+        SliverToBoxAdapter(child: _buildMyTaskSection()),
+        SliverToBoxAdapter(child: _buildRecentUpdatesSection()),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+      ],
     );
   }
 
@@ -896,7 +906,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             children: [
               _buildNavItem(Icons.home_rounded, 'Home', 0),
               _buildNavItem(Icons.chat_bubble_rounded, 'Chats', 1),
-              _buildNavItem(Icons.school_rounded, 'Classes', 2),
+              // Show different third tab based on user type
+              widget.userType == UserType.admin
+                  ? _buildNavItem(Icons.admin_panel_settings, 'Manage', 2)
+                  : _buildNavItem(Icons.school_rounded, 'Classes', 2),
               _buildNavItem(Icons.settings_rounded, 'Settings', 3),
             ],
           ),
@@ -915,12 +928,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
               builder: (context) => const ChatScreen(),
             ),
           );
-        } else if (index == 2) { // Classes tab
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ClassesScreen(),
-            ),
-          );
+        } else if (index == 2) { // Classes/Management tab
+          if (widget.userType == UserType.admin) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const ManagementScreen(),
+              ),
+            );
+          } else {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const ClassesScreen(),
+              ),
+            );
+          }
         } else if (index == 3) { // Settings tab
           Navigator.of(context).push(
             MaterialPageRoute(

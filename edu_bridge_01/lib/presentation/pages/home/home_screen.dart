@@ -196,13 +196,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F9FA),
         body: SafeArea(
-          child: _selectedIndex == 0 
-              ? (widget.userType == UserType.admin 
-                  ? const AdminDashboardScreen()
-                  : _buildHomeContent())
-              : _buildHomeContent(),
+          child: _buildHomeContent(),
         ),
-        bottomNavigationBar: _buildBottomNav(),
       ),
     );
   }
@@ -882,100 +877,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildNavItem(Icons.home_rounded, 'Home', 0),
-              _buildNavItem(Icons.chat_bubble_rounded, 'Chats', 1),
-              // Show different third tab based on user type
-              widget.userType == UserType.admin
-                  ? _buildNavItem(Icons.admin_panel_settings, 'Manage', 2)
-                  : _buildNavItem(Icons.school_rounded, 'Classes', 2),
-              _buildNavItem(Icons.settings_rounded, 'Settings', 3),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
-        if (index == 1) { // Chat tab
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ChatScreen(),
-            ),
-          );
-        } else if (index == 2) { // Classes/Management tab
-          if (widget.userType == UserType.admin) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const ManagementScreen(),
-              ),
-            );
-          } else {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const ClassesScreen(),
-              ),
-            );
-          }
-        } else if (index == 3) { // Settings tab
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SettingsScreen(),
-            ),
-          );
-        } else {
-          setState(() => _selectedIndex = index);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isActive ? const Color(0xFF3366FF) : const Color(0xFF8E8E93),
-              size: 26,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isActive ? const Color(0xFF3366FF) : const Color(0xFF8E8E93),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
   
   void _showAllCategoriesBottomSheet() {
     showModalBottomSheet(

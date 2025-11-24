@@ -8,6 +8,10 @@ import '../../../core/constants/app_constants.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../bloc/auth/auth_event.dart';
+import '../../bloc/theme/theme_bloc.dart';
+import '../../widgets/theme_selector_sheet.dart';
+import '../../bloc/language/language_bloc.dart';
+import '../../widgets/language_selector_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -19,7 +23,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _assignmentReminder = true;
-  String _selectedLanguage = 'English';
+
   String _selectedTheme = 'Light mode';
   XFile? _profileImage;
 
@@ -163,12 +167,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         isDarkMode: isDarkMode,
                       ),
                       _buildDivider(),
-                      _buildNavigationTile(
-                        icon: Icons.translate_rounded,
-                        title: 'Language',
-                        value: _selectedLanguage,
-                        onTap: _changeLanguage,
-                        isDarkMode: isDarkMode,
+                      BlocBuilder<LanguageBloc, LanguageState>(
+                        builder: (context, languageState) {
+                          return _buildNavigationTile(
+                            icon: Icons.translate_rounded,
+                            title: 'Language',
+                            value: languageState.language.name,
+                            onTap: _changeLanguage,
+                            isDarkMode: isDarkMode,
+                          );
+                        },
                       ),
                     ]),
                     const SizedBox(height: 16),
@@ -180,12 +188,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         isDarkMode: isDarkMode,
                       ),
                       _buildDivider(),
-                      _buildNavigationTile(
-                        icon: Icons.palette_outlined,
-                        title: 'Theme',
-                        value: _selectedTheme,
-                        onTap: _changeTheme,
-                        isDarkMode: isDarkMode,
+                      BlocBuilder<ThemeBloc, ThemeState>(
+                        builder: (context, themeState) {
+                          return _buildNavigationTile(
+                            icon: Icons.palette_outlined,
+                            title: 'Theme',
+                            value: themeState.themeName,
+                            onTap: _changeTheme,
+                            isDarkMode: isDarkMode,
+                          );
+                        },
                       ),
                     ]),
                     const SizedBox(height: 16),
@@ -567,29 +579,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _changeTheme() {
-    setState(() {
-      _selectedTheme = _selectedTheme == 'Light mode' ? 'Dark mode' : 'Light mode';
-    });
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const ThemeSelectorSheet(),
+    );
   }
 
   void _changeLanguage() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Language'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ['English', 'Spanish', 'French', 'German']
-              .map((lang) => ListTile(
-                    title: Text(lang),
-                    onTap: () {
-                      setState(() => _selectedLanguage = lang);
-                      Navigator.pop(context);
-                    },
-                  ))
-              .toList(),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
+      builder: (context) => const LanguageSelectorSheet(),
     );
   }
 

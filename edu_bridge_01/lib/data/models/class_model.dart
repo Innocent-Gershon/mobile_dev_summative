@@ -8,6 +8,8 @@ class ClassModel {
   final String nextAssignment;
   final String dueDate;
   final String color;
+  final List<String> assignedStudents;
+  final String description;
 
   ClassModel({
     required this.id,
@@ -19,6 +21,8 @@ class ClassModel {
     required this.nextAssignment,
     required this.dueDate,
     required this.color,
+    this.assignedStudents = const [],
+    this.description = '',
   });
 
   factory ClassModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class ClassModel {
       nextAssignment: json['nextAssignment'] ?? '',
       dueDate: json['dueDate'] ?? '',
       color: json['color'] ?? 'blue',
+      assignedStudents: List<String>.from(json['assignedStudents'] ?? []),
+      description: json['description'] ?? '',
     );
   }
 
@@ -46,6 +52,8 @@ class ClassModel {
       'nextAssignment': nextAssignment,
       'dueDate': dueDate,
       'color': color,
+      'assignedStudents': assignedStudents,
+      'description': description,
     };
   }
 }

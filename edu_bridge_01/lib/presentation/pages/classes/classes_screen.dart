@@ -8,6 +8,7 @@ import '../../bloc/classes/classes_state.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../assignments/create_assignment_screen.dart';
+import '../assignments/assignment_details_sheet.dart';
 
 class ClassesScreen extends StatelessWidget {
   const ClassesScreen({super.key});
@@ -44,7 +45,7 @@ class _ClassesViewState extends State<ClassesView> {
         title: const Padding(
           padding: EdgeInsets.only(left: 4.0),
           child: Text(
-            'My Classes',
+            'Classes',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -97,14 +98,17 @@ class _ClassesViewState extends State<ClassesView> {
               builder: (context, state) {
                 return IconButton(
                   icon: const Icon(Icons.add, color: Colors.black, size: 24),
-                  onPressed: () {
+                  onPressed: () async {
                     if (state is AuthAuthenticated && state.userType == 'Teacher') {
-                      Navigator.push(
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const CreateAssignmentScreen(),
                         ),
                       );
+                      if (result == true && mounted) {
+                        context.read<ClassesBloc>().add(RefreshClasses());
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -344,11 +348,33 @@ class ClassCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
+          if (classModel.assignedStudents.isNotEmpty)
+            const SizedBox(height: 8),
+          if (classModel.assignedStudents.isNotEmpty)
+            Text(
+              'Assigned to: ${classModel.assignedStudents.take(3).join(", ")}${classModel.assignedStudents.length > 3 ? " +${classModel.assignedStudents.length - 3} more" : ""}',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black.withOpacity(0.7),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           const SizedBox(height: 14),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () {},
+              onPressed: () async {
+                final result = await showModalBottomSheet<bool>(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => AssignmentDetailsSheet(assignment: classModel),
+                );
+                
+                if (result == true && context.mounted) {
+                  context.read<ClassesBloc>().add(RefreshClasses());
+                }
+              },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -385,14 +411,18 @@ class ClassCard extends StatelessWidget {
 
   Color _getCardColor() {
     switch (classModel.color) {
-      case 'green':
-        return const Color(0xFFB8C5AE);
       case 'blue':
-        return const Color(0xFF9EAFB8);
-      case 'brown':
-        return const Color(0xFFD4C5A6);
+        return const Color(0xFF3B82F6); // Blue
+      case 'green':
+        return const Color(0xFF10B981); // Green
+      case 'purple':
+        return const Color(0xFF8B5CF6); // Purple
+      case 'orange':
+        return const Color(0xFFF59E0B); // Orange
+      case 'teal':
+        return const Color(0xFF14B8A6); // Teal
       default:
-        return const Color(0xFFE5E5E5);
+        return const Color(0xFF6B7280); // Gray
     }
   }
 }

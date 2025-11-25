@@ -8,6 +8,7 @@ import 'classes/classes_screen.dart';
 import 'settings/settings_screen.dart';
 import 'admin/admin_dashboard_screen.dart';
 import 'admin/management_screen.dart';
+import 'notifications/notifications_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -32,21 +33,21 @@ class _MainNavigationState extends State<MainNavigation> {
         final isAdmin = state.userType == 'Admin';
         
         return Scaffold(
-          body: _buildCurrentScreen(isAdmin),
+          body: _buildCurrentScreen(isAdmin, state),
           bottomNavigationBar: _buildBottomNav(isAdmin),
         );
       },
     );
   }
 
-  Widget _buildCurrentScreen(bool isAdmin) {
+  Widget _buildCurrentScreen(bool isAdmin, AuthAuthenticated authState) {
     switch (_selectedIndex) {
       case 0:
         return isAdmin ? const AdminDashboardScreen() : const HomeScreen();
       case 1:
-        return const ChatScreen();
+        return authState.userType == 'Parent' ? const NotificationsScreen() : const ChatScreen();
       case 2:
-        return isAdmin ? const ManagementScreen() : const ClassesScreen();
+        return isAdmin ? const ManagementScreen() : _buildClassesScreen(authState);
       case 3:
         return const SettingsScreen();
       default:
@@ -55,6 +56,15 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 
   Widget _buildBottomNav(bool isAdmin) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is! AuthAuthenticated) return const SizedBox();
+        return _buildBottomNavContent(isAdmin, state);
+      },
+    );
+  }
+  
+  Widget _buildBottomNavContent(bool isAdmin, AuthAuthenticated authState) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFE2E8F0),
@@ -81,7 +91,11 @@ class _MainNavigationState extends State<MainNavigation> {
                 isAdmin ? 'Dashboard' : 'Home', 
                 0
               ),
-              _buildNavItem(Icons.chat_bubble_rounded, 'Chats', 1),
+              _buildNavItem(
+                authState.userType == 'Parent' ? Icons.notifications_rounded : Icons.chat_bubble_rounded,
+                authState.userType == 'Parent' ? 'Notifications' : 'Chats',
+                1
+              ),
               _buildNavItem(
                 isAdmin ? Icons.admin_panel_settings : Icons.school_rounded,
                 isAdmin ? 'Manage' : 'Classes',
@@ -93,6 +107,18 @@ class _MainNavigationState extends State<MainNavigation> {
         ),
       ),
     );
+  }
+
+  Widget _buildClassesScreen(AuthAuthenticated state) {
+    if (state.userType == 'Parent') {
+      return ClassesScreen(parentChildName: _getParentChildName(state));
+    }
+    return const ClassesScreen();
+  }
+  
+  String? _getParentChildName(AuthAuthenticated state) {
+    // This will be handled in the ClassesScreen itself
+    return null;
   }
 
   Widget _buildNavItem(IconData icon, String label, int index) {

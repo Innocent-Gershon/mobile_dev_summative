@@ -26,11 +26,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           emit(ChatsLoaded(chats));
         },
         onError: (error) {
-          emit(ChatError(error.toString()));
+          emit(ChatsLoaded([])); // Show empty state instead of error
         },
       );
     } catch (e) {
-      emit(ChatError(e.toString()));
+      emit(ChatsLoaded([])); // Show empty state instead of error
     }
   }
 

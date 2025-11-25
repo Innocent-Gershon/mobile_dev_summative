@@ -1,11 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow authenticated users to read and write their own user document
+    // Allow reading users collection for student selection during signup
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Allow authenticated users to read other users (for student selection)
-      allow read: if request.auth != null;
+      allow read: if true; // Allow anyone to read for student selection
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     
     // Allow authenticated users to read and write assignments

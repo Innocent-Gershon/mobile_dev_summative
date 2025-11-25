@@ -280,8 +280,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           additionalData: event.additionalData,
         );
 
-        // Skip email verification for parents and go directly to home
-        if (event.userType == 'Parent') {
+        // Skip email verification only for admin users
+        if (event.userType == 'Admin') {
           emit(
             AuthAuthenticated(
               userId: user.uid,
@@ -421,9 +421,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         userType: event.userType,
       );
 
-      // Send email verification if not already verified
+      // Send email verification if not already verified (skip for admin)
       final user = _authRepository.currentUser;
-      if (user != null && !user.emailVerified) {
+      if (user != null && !user.emailVerified && event.userType != 'Admin') {
         await user.sendEmailVerification();
         emit(AuthEmailVerificationSent(event.email));
       } else {

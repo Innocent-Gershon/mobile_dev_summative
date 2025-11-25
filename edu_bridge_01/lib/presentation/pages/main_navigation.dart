@@ -1,0 +1,126 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../bloc/auth/auth_state.dart';
+import 'home/home_screen.dart';
+import 'chat/chat_screen.dart';
+import 'classes/classes_screen.dart';
+import 'settings/settings_screen.dart';
+import 'admin/admin_dashboard_screen.dart';
+import 'admin/management_screen.dart';
+
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+
+  @override
+  State<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is! AuthAuthenticated) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final isAdmin = state.userType == 'Admin';
+        
+        return Scaffold(
+          body: _buildCurrentScreen(isAdmin),
+          bottomNavigationBar: _buildBottomNav(isAdmin),
+        );
+      },
+    );
+  }
+
+  Widget _buildCurrentScreen(bool isAdmin) {
+    switch (_selectedIndex) {
+      case 0:
+        return isAdmin ? const AdminDashboardScreen() : const HomeScreen();
+      case 1:
+        return const ChatScreen();
+      case 2:
+        return isAdmin ? const ManagementScreen() : const ClassesScreen();
+      case 3:
+        return const SettingsScreen();
+      default:
+        return isAdmin ? const AdminDashboardScreen() : const HomeScreen();
+    }
+  }
+
+  Widget _buildBottomNav(bool isAdmin) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(
+                Icons.home_rounded, 
+                isAdmin ? 'Dashboard' : 'Home', 
+                0
+              ),
+              _buildNavItem(Icons.chat_bubble_rounded, 'Chats', 1),
+              _buildNavItem(
+                isAdmin ? Icons.admin_panel_settings : Icons.school_rounded,
+                isAdmin ? 'Manage' : 'Classes',
+                2
+              ),
+              _buildNavItem(Icons.settings_rounded, 'Settings', 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isActive = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? const Color(0xFF3366FF) : const Color(0xFF8E8E93),
+              size: 26,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? const Color(0xFF3366FF) : const Color(0xFF8E8E93),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -5,23 +5,23 @@ class ChatRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Stream<List<ChatModel>> getChats(String userId) {
-    return _firestore
-        .collection('chats')
-        .where('participants', arrayContains: userId)
-        .orderBy('lastMessageTime', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          if (snapshot.docs.isEmpty) {
-            return <ChatModel>[];
-          }
-          return snapshot.docs
-              .map((doc) => ChatModel.fromMap({...doc.data(), 'id': doc.id}))
-              .toList();
-        })
-        .handleError((error) {
-          print('Error loading chats: $error');
-          return <ChatModel>[];
-        });
+    try {
+      return _firestore
+          .collection('chats')
+          .where('participants', arrayContains: userId)
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs
+                .map((doc) => ChatModel.fromMap({...doc.data(), 'id': doc.id}))
+                .toList();
+          })
+          .handleError((error) {
+            print('Error loading chats: $error');
+          });
+    } catch (e) {
+      print('Error setting up chat stream: $e');
+      return Stream.value(<ChatModel>[]);
+    }
   }
 
   Stream<List<MessageModel>> getMessages(String chatId) {

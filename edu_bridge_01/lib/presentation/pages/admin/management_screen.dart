@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../data/repositories/admin_repository.dart';
 
 class ManagementScreen extends StatefulWidget {
   const ManagementScreen({super.key});
@@ -11,6 +12,7 @@ class ManagementScreen extends StatefulWidget {
 class _ManagementScreenState extends State<ManagementScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   int _selectedTab = 0;
+  final AdminRepository _adminRepository = AdminRepository();
 
   @override
   void initState() {
@@ -64,26 +66,6 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.arrow_back_ios_new, size: 18),
-            ),
-          ),
-          const SizedBox(width: 16),
           const Expanded(
             child: Text(
               'System Management',
@@ -132,10 +114,12 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
           color: const Color(0xFF3366FF),
           borderRadius: BorderRadius.circular(12),
         ),
-        indicatorPadding: const EdgeInsets.all(4),
+        indicatorPadding: const EdgeInsets.all(2),
+        indicatorSize: TabBarIndicatorSize.tab,
         labelColor: Colors.white,
         unselectedLabelColor: const Color(0xFF666666),
         labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        labelPadding: const EdgeInsets.symmetric(vertical: 12),
         tabs: const [
           Tab(text: 'Users'),
           Tab(text: 'Courses'),
@@ -185,14 +169,20 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
   }
 
   Widget _buildUserStatsCards() {
-    return Row(
-      children: [
-        Expanded(child: _buildStatsCard('Students', '1,923', Icons.school, const Color(0xFF34C759))),
-        const SizedBox(width: 12),
-        Expanded(child: _buildStatsCard('Teachers', '156', Icons.person, const Color(0xFF3366FF))),
-        const SizedBox(width: 12),
-        Expanded(child: _buildStatsCard('Parents', '768', Icons.family_restroom, const Color(0xFFFF9500))),
-      ],
+    return StreamBuilder<Map<String, int>>(
+      stream: _adminRepository.getUserStats(),
+      builder: (context, snapshot) {
+        final stats = snapshot.data ?? {'students': 0, 'teachers': 0, 'parents': 0};
+        return Row(
+          children: [
+            Expanded(child: _buildStatsCard('Students', '${stats['students']}', Icons.school, const Color(0xFF34C759))),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatsCard('Teachers', '${stats['teachers']}', Icons.person, const Color(0xFF3366FF))),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatsCard('Parents', '${stats['parents']}', Icons.family_restroom, const Color(0xFFFF9500))),
+          ],
+        );
+      },
     );
   }
 
@@ -513,7 +503,13 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildAnalyticsCard('Assignments', '156', Icons.assignment, const Color(0xFFFF9500))),
+            StreamBuilder<int>(
+              stream: _adminRepository.getAssignmentsCount(),
+              builder: (context, snapshot) {
+                final assignmentsCount = snapshot.data ?? 0;
+                return Expanded(child: _buildAnalyticsCard('Assignments', '$assignmentsCount', Icons.assignment, const Color(0xFFFF9500)));
+              },
+            ),
             const SizedBox(width: 12),
             Expanded(child: _buildAnalyticsCard('Completion', '78.9%', Icons.check_circle, const Color(0xFFAF52DE))),
           ],

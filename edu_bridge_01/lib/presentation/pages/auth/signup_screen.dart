@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../widgets/role_selection_dialog.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../data/repositories/auth_repository.dart';
 import 'login_screen.dart';
 import 'email_verification_screen.dart';
 
@@ -29,6 +31,186 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _obscureConfirmPassword = true;
   String _selectedUserType = AppConstants.student;
   bool _isDropdownOpen = false;
+  List<Map<String, dynamic>> _students = [];
+  bool _isLoadingStudents = false;
+
+  Future<void> _loadStudents() async {
+    setState(() => _isLoadingStudents = true);
+    try {
+      final authRepository = RepositoryProvider.of<AuthRepository>(context);
+      final students = await authRepository.getAllRegisteredStudents();
+      print('Loaded ${students.length} students: ${students.map((s) => s['name']).toList()}');
+      setState(() => _students = students);
+    } catch (e) {
+      print('Error loading students: $e');
+    } finally {
+      setState(() => _isLoadingStudents = false);
+    }
+  }
+
+  void _showStudentSearchDialog() {
+    if (_students.isEmpty) {
+      _loadStudents();
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.5,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.search, color: Colors.blue.shade600, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Find Your Student',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Registered Students',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: _isLoadingStudents
+                          ? const Center(child: CircularProgressIndicator())
+                          : _students.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No students found',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  itemCount: _students.length,
+                                  itemBuilder: (context, index) {
+                                    final student = _students[index];
+                                    return _buildStudentOption(student['name'] ?? 'Unknown');
+                                  },
+                                ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStudentOption(String studentName) {
+    return InkWell(
+      onTap: () {
+        _childNameController.text = studentName;
+        Navigator.pop(context);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Center(
+                child: Text(
+                  studentName.substring(0, 1),
+                  style: TextStyle(
+                    color: Colors.blue.shade600,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                studentName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStudents();
+  }
 
   @override
   void dispose() {
@@ -675,7 +857,7 @@ class _SignUpPageState extends State<SignUpPage> {
               // Custom Dropdown
               if (_isDropdownOpen)
                 Positioned(
-                  top: 280,
+                  top: 200,
                   right: 24,
                   child: Material(
                     color: Colors.transparent,
@@ -772,12 +954,40 @@ class _SignUpPageState extends State<SignUpPage> {
   List<Widget> _buildParentFields() {
     return [
       const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Make sure to enter the exact name as registered by your student',
+                style: TextStyle(
+                  color: Colors.blue.shade700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
       TextFormField(
         controller: _childNameController,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           labelText: 'Student Name',
-          prefixIcon: Icon(Icons.child_care_outlined),
-          helperText: 'Enter the exact name of your registered student',
+          prefixIcon: const Icon(Icons.child_care_outlined),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.search, color: Colors.blue),
+            onPressed: () => _showStudentSearchDialog(),
+            tooltip: 'Search for student',
+          ),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -789,6 +999,7 @@ class _SignUpPageState extends State<SignUpPage> {
           return null;
         },
       ),
+      const SizedBox(height: 16),
     ];
   }
 

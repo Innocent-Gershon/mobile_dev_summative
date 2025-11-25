@@ -130,31 +130,62 @@ class AuthRepository {
   }
   
   Future<Map<String, dynamic>?> findStudentByName(String studentName) async {
-    // For demo purposes, return mock data for specific test names
-    if (studentName.toLowerCase() == 'john doe' || 
-        studentName.toLowerCase() == 'jane smith' ||
-        studentName.toLowerCase() == 'alex johnson') {
-      return {
-        'uid': 'student_${studentName.toLowerCase().replaceAll(' ', '_')}',
-        'name': studentName,
-        'email': '${studentName.toLowerCase().replaceAll(' ', '.')}@student.edu',
-        'userType': 'Student',
-        'studentClass': 'Grade 10A',
-        'createdAt': DateTime.now(),
-      };
-    }
+    final cleanName = studentName.trim();
     
-    final query = await _firestore
-        .collection('users')
-        .where('userType', isEqualTo: 'Student')
-        .where('name', isEqualTo: studentName)
-        .limit(1)
-        .get();
-    return query.docs.isNotEmpty ? query.docs.first.data() : null;
+    try {
+      // First try exact match
+      var query = await _firestore
+          .collection('users')
+          .where('userType', isEqualTo: 'Student')
+          .where('name', isEqualTo: cleanName)
+          .limit(1)
+          .get();
+      
+      if (query.docs.isNotEmpty) {
+        return query.docs.first.data();
+      }
+      
+      // Try case-insensitive search by getting all students and filtering
+      final allStudents = await _firestore
+          .collection('users')
+          .where('userType', isEqualTo: 'Student')
+          .get();
+      
+      for (var doc in allStudents.docs) {
+        final data = doc.data();
+        final studentNameInDb = data['name']?.toString().trim().toLowerCase() ?? '';
+        if (studentNameInDb == cleanName.toLowerCase()) {
+          return data;
+        }
+      }
+      
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
   
   Future<bool> isStudentRegistered(String studentName) async {
     final student = await findStudentByName(studentName);
     return student != null;
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllRegisteredStudents() async {
+    try {
+      print('Querying Firestore for students...');
+      final query = await _firestore
+          .collection('users')
+          .where('userType', isEqualTo: 'Student')
+          .get();
+      
+      print('Found ${query.docs.length} student documents');
+      final students = query.docs.map((doc) => doc.data()).toList();
+      print('Student names: ${students.map((s) => s['name']).toList()}');
+      
+      return students;
+    } catch (e) {
+      print('Error in getAllRegisteredStudents: $e');
+      return [];
+    }
   }
 }

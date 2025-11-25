@@ -11,19 +11,23 @@ import '../assignments/create_assignment_screen.dart';
 import '../assignments/assignment_details_sheet.dart';
 
 class ClassesScreen extends StatelessWidget {
-  const ClassesScreen({super.key});
+  final String? parentChildName;
+  
+  const ClassesScreen({super.key, this.parentChildName});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => ClassesBloc()..add(LoadClasses()),
-      child: const ClassesView(),
+      child: ClassesView(parentChildName: parentChildName),
     );
   }
 }
 
 class ClassesView extends StatefulWidget {
-  const ClassesView({super.key});
+  final String? parentChildName;
+  
+  const ClassesView({super.key, this.parentChildName});
 
   @override
   State<ClassesView> createState() => _ClassesViewState();
@@ -42,11 +46,11 @@ class _ClassesViewState extends State<ClassesView> {
         backgroundColor: const Color(0xFFF5F5F5),
         elevation: 0,
         toolbarHeight: 80,
-        title: const Padding(
-          padding: EdgeInsets.only(left: 4.0),
+        title: Padding(
+          padding: const EdgeInsets.only(left: 4.0),
           child: Text(
-            'Classes',
-            style: TextStyle(
+            widget.parentChildName != null ? '${widget.parentChildName}\'s Assignments' : 'Classes',
+            style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.black,

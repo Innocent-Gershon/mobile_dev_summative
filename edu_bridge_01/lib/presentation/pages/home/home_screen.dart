@@ -8,6 +8,7 @@ import '../settings/settings_screen.dart';
 import '../chat/chat_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../admin/management_screen.dart';
+import '../parent/parent_dashboard_screen.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 enum UserType { teacher, student, parent, admin, guest }
@@ -58,6 +59,12 @@ class HomeScreen extends StatelessWidget {
       builder: (context, state) {
         if (state is AuthAuthenticated) {
           final userType = stringToUserType(state.userType);
+          
+          // Show parent dashboard for parent users
+          if (userType == UserType.parent) {
+            return const ParentDashboardScreen();
+          }
+          
           return _HomeScreenContent(
             userType: userType,
             userName: state.name,

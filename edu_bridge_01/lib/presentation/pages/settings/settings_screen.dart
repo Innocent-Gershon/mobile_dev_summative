@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSettingsContent(AuthAuthenticated authState) {
-    final double headerHeight = 240.0;
+    final double headerHeight = 180.0;
     final isDarkMode = _selectedTheme == 'Dark mode';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -68,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             children: [
               SizedBox(
-                height: 340,
+                height: 280,
                 child: Stack(
                   alignment: Alignment.topCenter,
                   children: [
@@ -114,32 +114,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                     ),
-                    // Profile Avatar & Name
+                    // Profile Avatar
                     Positioned(
-                      top: headerHeight - 75,
-                      child: Column(
-                        children: [
-                          _buildAvatar(authState, isDarkMode),
-                          const SizedBox(height: 16),
-                          Text(
-                            _getDisplayName(authState),
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white : Colors.black,
-                              fontFamily: 'Plus Jakarta Sans',
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${authState.email} | +01 234 567 89',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
-                            ),
-                          ),
-                        ],
+                      top: headerHeight - 80,
+                      child: _buildAvatar(authState, isDarkMode),
+                    ),
+                    // Name
+                    Positioned(
+                      top: headerHeight + 55,
+                      child: Text(
+                        _getDisplayName(authState),
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                          fontFamily: 'Plus Jakarta Sans',
+                        ),
                       ),
                     ),
                   ],
@@ -650,28 +640,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLogoutDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Log Out',
-          style: TextStyle(fontWeight: FontWeight.bold),
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.25,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        content: const Text('Are you sure you want to log out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AuthBloc>().add(AuthLogoutRequested());
-            },
-            child: const Text('Log Out', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text(
+                'Log Out',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(
+                      Icons.logout,
+                      color: Colors.red,
+                      size: 24,
+                    ),
+                    title: const Text(
+                      'Are you sure you want to log out?',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.read<AuthBloc>().add(AuthLogoutRequested());
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.close,
+                      color: Color(0xFF64748B),
+                      size: 24,
+                    ),
+                    title: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

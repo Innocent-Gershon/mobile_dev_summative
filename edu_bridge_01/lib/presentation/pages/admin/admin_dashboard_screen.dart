@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../../data/repositories/admin_repository.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -14,6 +15,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedPeriod = 0;
   int _selectedPanel = 0;
+  final AdminRepository _adminRepository = AdminRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -30,16 +32,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildDashboardContent(AuthAuthenticated authState) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: Column(
-        children: [
-          _buildHeader(authState),
-          _buildTopPanel(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _buildMainContent(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(authState),
+            _buildTopPanel(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: _buildMainContent(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -166,14 +170,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return Row(
-                children: [
-                  Expanded(child: _buildStatCard('Students', '1,923', '+8%', Icons.school_outlined, const Color(0xFF10B981))),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildStatCard('Teachers', '156', '+3%', Icons.person_outline, const Color(0xFF3366FF))),
-                ],
+          StreamBuilder<Map<String, int>>(
+            stream: _adminRepository.getUserStats(),
+            builder: (context, snapshot) {
+              final stats = snapshot.data ?? {'students': 0, 'teachers': 0};
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return Row(
+                    children: [
+                      Expanded(child: _buildStatCard('Students', '${stats['students']}', '+8%', Icons.school_outlined, const Color(0xFF10B981))),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildStatCard('Teachers', '${stats['teachers']}', '+3%', Icons.person_outline, const Color(0xFF3366FF))),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -198,7 +208,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildStatCard('Active Courses', '24', '+5%', Icons.book_outlined, const Color(0xFF3366FF)),
+          StreamBuilder<int>(
+            stream: _adminRepository.getCoursesCount(),
+            builder: (context, snapshot) {
+              final coursesCount = snapshot.data ?? 0;
+              return _buildStatCard('Active Courses', '$coursesCount', '+5%', Icons.book_outlined, const Color(0xFF3366FF));
+            },
+          ),
         ],
       ),
     );
@@ -220,7 +236,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildStatCard('Performance', '87.5%', '+12%', Icons.trending_up, const Color(0xFF10B981)),
+          StreamBuilder<int>(
+            stream: _adminRepository.getAssignmentsCount(),
+            builder: (context, snapshot) {
+              final assignmentsCount = snapshot.data ?? 0;
+              return _buildStatCard('Total Assignments', '$assignmentsCount', '+12%', Icons.assignment_outlined, const Color(0xFF10B981));
+            },
+          ),
         ],
       ),
     );
@@ -362,20 +384,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             builder: (context, constraints) {
               return Column(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(child: _buildStatCard('Total Users', '2,847', '+12%', Icons.people_outline, const Color(0xFF3366FF))),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildStatCard('Active Students', '1,923', '+8%', Icons.school_outlined, const Color(0xFF10B981))),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: _buildStatCard('Teachers', '156', '+3%', Icons.person_outline, const Color(0xFFF59E0B))),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildStatCard('Parents', '768', '+15%', Icons.family_restroom_outlined, const Color(0xFF8B5CF6))),
-                    ],
+                  StreamBuilder<Map<String, int>>(
+                    stream: _adminRepository.getUserStats(),
+                    builder: (context, snapshot) {
+                      final stats = snapshot.data ?? {'totalUsers': 0, 'students': 0, 'teachers': 0, 'parents': 0};
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: _buildStatCard('Total Users', '${stats['totalUsers']}', '+12%', Icons.people_outline, const Color(0xFF3366FF))),
+                              const SizedBox(width: 16),
+                              Expanded(child: _buildStatCard('Active Students', '${stats['students']}', '+8%', Icons.school_outlined, const Color(0xFF10B981))),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(child: _buildStatCard('Teachers', '${stats['teachers']}', '+3%', Icons.person_outline, const Color(0xFFF59E0B))),
+                              const SizedBox(width: 16),
+                              Expanded(child: _buildStatCard('Parents', '${stats['parents']}', '+15%', Icons.family_restroom_outlined, const Color(0xFF8B5CF6))),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               );

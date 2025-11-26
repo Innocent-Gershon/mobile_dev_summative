@@ -559,8 +559,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           color: isDestructive ? Colors.red : Colors.black87,
                         ),
                       ),
-                      if (subtitle != null) ..[
+                      if (subtitle != null)
                         const SizedBox(height: 2),
+                      if (subtitle != null)
                         Text(
                           subtitle,
                           style: TextStyle(
@@ -568,7 +569,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             color: Colors.grey[600],
                           ),
                         ),
-                      ]
                     ],
                   ),
                 ),

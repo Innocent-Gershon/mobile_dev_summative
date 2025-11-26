@@ -28,7 +28,7 @@ class AuthAuthenticated extends AuthState {
   });
 
   @override
-  List<Object?> get props => [userId, email, name, userType, photoUrl];
+  List<Object> get props => [userId, email, name, userType, photoUrl ?? ''];
 }
 
 class AuthUnauthenticated extends AuthState {}

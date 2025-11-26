@@ -22,6 +22,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<CompleteGoogleSignInEvent>(_onCompleteGoogleSignIn);
     on<CheckEmailVerificationEvent>(_onCheckEmailVerification);
     on<ResendVerificationEmailEvent>(_onResendVerificationEmail);
+    on<UpdateUserProfile>(_onUpdateUserProfile);
   }
 
   void _onLoginWithEmail(
@@ -482,6 +483,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e) {
       emit(AuthError('Failed to resend verification email: ${e.toString()}'));
+    }
+  }
+
+  void _onUpdateUserProfile(
+    UpdateUserProfile event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is AuthAuthenticated) {
+      emit(
+        AuthAuthenticated(
+          userId: currentState.userId,
+          email: currentState.email,
+          name: event.name,
+          userType: currentState.userType,
+          photoUrl: event.photoUrl,
+        ),
+      );
     }
   }
 }

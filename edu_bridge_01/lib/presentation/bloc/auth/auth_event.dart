@@ -98,3 +98,16 @@ class ResendVerificationEmailEvent extends AuthEvent {
   @override
   List<Object> get props => [email];
 }
+
+class UpdateUserProfile extends AuthEvent {
+  final String name;
+  final String? photoUrl;
+
+  const UpdateUserProfile({
+    required this.name,
+    this.photoUrl,
+  });
+
+  @override
+  List<Object?> get props => [name, photoUrl];
+}

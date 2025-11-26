@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/constants/app_constants.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../bloc/auth/auth_event.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -324,7 +325,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     )
                   : const Icon(
-                      Icons.upload_file,
+                      Icons.camera_alt,
                       size: 20,
                       color: Colors.black87,
                     ),
@@ -478,9 +479,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 _buildImageSourceOption(
-                  icon: Icons.upload_file,
-                  label: 'Upload from Computer',
-                  subtitle: 'Select image file from your device',
+                  icon: Icons.folder_open,
+                  label: 'Select from Files',
+                  subtitle: 'Choose image from your computer',
                   onTap: () {
                     Navigator.pop(context);
                     _uploadImageFromDevice();
@@ -746,6 +747,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         data,
         SetOptions(merge: true),
       );
+
+      // Update auth bloc state to reflect changes immediately
+      context.read<AuthBloc>().add(UpdateUserProfile(
+        name: _nameController.text.trim(),
+        photoUrl: photoUrl,
+      ));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

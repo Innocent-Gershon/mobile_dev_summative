@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:file_picker/file_picker.dart'; // Using FilePicker for PC/Docs access
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb; // To handle Web/PC logic if needed
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/constants/app_constants.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -25,9 +26,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isUploadingImage = false;
   
-  String? _imageData; // Base64 string
-  String? _imageUrl; // Firestore URL
+  String? _selectedImagePath;
+  Uint8List? _selectedImageBytes;
+  String? _imageUrl; // Firebase Storage URL
 
   @override
   void initState() {
@@ -244,11 +247,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final initials = _getInitials(authState is AuthAuthenticated ? authState.name : 'User');
     
     ImageProvider? imageProvider;
-    if (_imageData != null) {
-      final base64String = _imageData!.contains(',') 
-          ? _imageData!.split(',')[1] 
-          : _imageData!;
-      imageProvider = MemoryImage(base64Decode(base64String));
+    if (_selectedImageBytes != null) {
+      imageProvider = MemoryImage(_selectedImageBytes!);
     } else if (_imageUrl != null && _imageUrl!.isNotEmpty) {
       imageProvider = NetworkImage(_imageUrl!);
     }
@@ -299,7 +299,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           bottom: 4,
           right: 4,
           child: GestureDetector(
-            onTap: _showImageSourceDialog,
+            onTap: _isUploadingImage ? null : _showImageSourceDialog,
             child: Container(
               width: 40,
               height: 40,
@@ -314,11 +314,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.folder_open_rounded, // Changed icon to represent folder/files
-                size: 20,
-                color: Colors.black87,
-              ),
+              child: _isUploadingImage
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.blue,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.upload_file,
+                      size: 20,
+                      color: Colors.black87,
+                    ),
             ),
           ),
         ),
@@ -460,7 +469,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Change Profile Photo',
+                  'Upload Profile Photo',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -468,27 +477,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // File Picker Option
                 _buildImageSourceOption(
-                  icon: Icons.folder_open,
-                  label: 'Select from Files / PC',
+                  icon: Icons.upload_file,
+                  label: 'Upload from Computer',
+                  subtitle: 'Select image file from your device',
                   onTap: () {
                     Navigator.pop(context);
-                    _pickFile();
+                    _uploadImageFromDevice();
                   },
                 ),
                 
-                if (_imageData != null || _imageUrl != null) ...[
+                if (_selectedImageBytes != null || _imageUrl != null) ...[
                   const SizedBox(height: 12),
                   _buildImageSourceOption(
                     icon: Icons.delete_outline,
                     label: 'Remove Photo',
+                    subtitle: 'Delete current profile photo',
                     onTap: () {
                       Navigator.pop(context);
-                      setState(() {
-                        _imageData = null;
-                        _imageUrl = null;
-                      });
+                      _removePhoto();
                     },
                     isDestructive: true,
                   ),
@@ -505,6 +512,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildImageSourceOption({
     required IconData icon,
     required String label,
+    String? subtitle,
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
@@ -539,12 +547,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: isDestructive ? Colors.red : Colors.black87,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: isDestructive ? Colors.red : Colors.black87,
+                        ),
+                      ),
+                      if (subtitle != null) ..[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
@@ -555,53 +580,124 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // UPDATED: Using FilePicker for PC/Docs access
-  Future<void> _pickFile() async {
+  Future<void> _uploadImageFromDevice() async {
     try {
-      // Pick the file - Open System Dialog
+      setState(() => _isUploadingImage = true);
+      
+      // Open file picker dialog
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image, // Restrict to images
+        type: FileType.image,
         allowMultiple: false,
-        // Important: withData: true ensures we get the bytes immediately,
-        // which is required for web and helpful for creating base64 on all platforms easily
-        withData: true, 
+        withData: true,
+        allowedExtensions: null, // Allow all image types
       );
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
         
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          throw Exception('File size must be less than 5MB');
+        }
+        
+        // Validate file type
+        final allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        final extension = file.extension?.toLowerCase();
+        if (extension == null || !allowedTypes.contains(extension)) {
+          throw Exception('Please select a valid image file (JPG, PNG, GIF, BMP, WEBP)');
+        }
+        
         Uint8List? fileBytes;
         
         if (file.bytes != null) {
           fileBytes = file.bytes;
-        } else if (file.path != null) {
-          // Fallback for some mobile implementations where bytes might be null
-          // but path is provided
+        } else if (file.path != null && !kIsWeb) {
           fileBytes = await File(file.path!).readAsBytes();
         }
 
         if (fileBytes != null) {
-          final base64String = base64Encode(fileBytes);
           setState(() {
-            _imageData = 'data:image/${file.extension ?? "jpeg"};base64,$base64String';
+            _selectedImagePath = file.path;
+            _selectedImageBytes = fileBytes;
           });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Text('Image selected: ${file.name}'),
+                  ],
+                ),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to pick file: $e'),
+            content: Text('Failed to select image: $e'),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
+    } finally {
+      setState(() => _isUploadingImage = false);
     }
   }
+  
+  void _removePhoto() {
+    setState(() {
+      _selectedImagePath = null;
+      _selectedImageBytes = null;
+      _imageUrl = null;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.info, color: Colors.white),
+            SizedBox(width: 12),
+            Text('Photo removed'),
+          ],
+        ),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
 
-  String? _getImageUrl() {
-    if (_imageData != null) return _imageData;
-    return _imageUrl;
+  Future<String?> _uploadImageToFirebase() async {
+    if (_selectedImageBytes == null) return _imageUrl;
+    
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) return null;
+    
+    try {
+      final fileName = 'profile_${authState.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ref = FirebaseStorage.instance.ref().child('profile_images/$fileName');
+      
+      final uploadTask = ref.putData(
+        _selectedImageBytes!,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      
+      final snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      throw Exception('Failed to upload image: $e');
+    }
   }
 
   String _getInitials(String name) {
@@ -624,7 +720,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     try {
-      final photoUrl = _getImageUrl();
+      String? photoUrl = _imageUrl;
+      
+      // Upload new image if selected
+      if (_selectedImageBytes != null) {
+        photoUrl = await _uploadImageToFirebase();
+      }
 
       final data = <String, dynamic>{
         'name': _nameController.text.trim(),
@@ -637,7 +738,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (photoUrl != null) {
         data['photoUrl'] = photoUrl;
-      } else if (_imageData == null && _imageUrl == null) {
+      } else {
         data['photoUrl'] = FieldValue.delete();
       }
 

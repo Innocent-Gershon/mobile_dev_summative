@@ -109,5 +109,5 @@ class UpdateUserProfile extends AuthEvent {
   });
 
   @override
-  List<Object?> get props => [name, photoUrl];
+  List<Object> get props => [name, photoUrl ?? ''];
 }

@@ -568,7 +568,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             color: Colors.grey[600],
                           ),
                         ),
-                      ],
+                      ]
                     ],
                   ),
                 ),

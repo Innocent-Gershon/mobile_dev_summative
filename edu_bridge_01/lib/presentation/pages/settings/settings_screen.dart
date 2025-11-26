@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../bloc/auth/auth_event.dart';
@@ -12,6 +14,7 @@ import '../../bloc/theme/theme_bloc.dart';
 import '../../widgets/theme_selector_sheet.dart';
 import '../../bloc/language/language_bloc.dart';
 import '../../widgets/language_selector_sheet.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -23,9 +26,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _assignmentReminder = true;
-
-  String _selectedTheme = 'Light mode';
-  XFile? _profileImage;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is AuthAuthenticated) {
-            return _buildSettingsContent(state);
+            return BlocBuilder<ThemeBloc, ThemeState>(
+              builder: (context, themeState) {
+                return _buildSettingsContent(state, themeState);
+              },
+            );
           }
           return const Scaffold(
             backgroundColor: Color(0xFFF5F7FA),
@@ -53,16 +57,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingsContent(AuthAuthenticated authState) {
+  Widget _buildSettingsContent(AuthAuthenticated authState, ThemeState themeState) {
     final double headerHeight = 180.0;
-    final isDarkMode = _selectedTheme == 'Dark mode';
+    final isDarkMode = themeState.themeMode == ThemeMode.dark || 
+        (themeState.themeMode == ThemeMode.system && 
+         MediaQuery.of(context).platformBrightness == Brightness.dark);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: isDarkMode
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF5F7FA),
+        backgroundColor: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF5F7FA),
         body: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Column(
@@ -143,14 +149,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildSettingsGroup(isDarkMode: isDarkMode, children: [
                       _buildSettingTile(
                         icon: Icons.chrome_reader_mode_outlined,
-                        title: 'Edit profile information',
+                        title: AppLocalizations.translate(context, 'profile'),
                         onTap: () => _editProfile(authState),
                         isDarkMode: isDarkMode,
                       ),
                       _buildDivider(),
                       _buildToggleTile(
                         icon: Icons.notifications_none_rounded,
-                        title: 'Notifications',
+                        title: AppLocalizations.translate(context, 'notifications'),
                         value: _notificationsEnabled,
                         valueText: _notificationsEnabled ? 'ON' : 'OFF',
                         onChanged: (value) => setState(() => _notificationsEnabled = value),
@@ -161,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         builder: (context, languageState) {
                           return _buildNavigationTile(
                             icon: Icons.translate_rounded,
-                            title: 'Language',
+                            title: AppLocalizations.translate(context, 'language'),
                             value: languageState.language.name,
                             onTap: _changeLanguage,
                             isDarkMode: isDarkMode,
@@ -182,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         builder: (context, themeState) {
                           return _buildNavigationTile(
                             icon: Icons.palette_outlined,
-                            title: 'Theme',
+                            title: AppLocalizations.translate(context, 'theme'),
                             value: themeState.themeName,
                             onTap: _changeTheme,
                             isDarkMode: isDarkMode,
@@ -266,25 +272,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               end: Alignment.bottomCenter,
             ),
           ),
-          child: _profileImage != null
-              ? ClipOval(
-                  child: Image.file(
-                    File(_profileImage!.path),
-                    width: 130,
-                    height: 130,
-                    fit: BoxFit.cover,
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+          child: Center(
+            child: Text(
+              initials,
+              style: const TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
         Positioned(
           bottom: 4,
@@ -510,62 +507,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return name.isNotEmpty ? name[0].toUpperCase() : 'U';
   }
 
-  void _editProfile(AuthAuthenticated authState) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() => _profileImage = pickedFile);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile image updated: ${pickedFile.name}')),
-        );
-      }
-    }
-
-    final nameController = TextEditingController(text: _getDisplayName(authState));
-    if (mounted) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (context) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            top: 24,
-            left: 24,
-            right: 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Edit Profile',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  // TODO: Add profile update event to AuthBloc
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile update feature coming soon')),
-                  );
-                  Navigator.pop(context);
-                },
-                child: const Text('Save'),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      );
-    }
+  void _editProfile(AuthAuthenticated authState) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const EditProfileScreen(),
+      ),
+    );
   }
 
   void _changeTheme() {
@@ -640,14 +588,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLogoutDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.25,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
@@ -660,14 +610,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(20),
+            Padding(
+              padding: const EdgeInsets.all(20),
               child: Text(
                 'Log Out',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+                  color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
                 ),
               ),
             ),
@@ -680,12 +630,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: Colors.red,
                       size: 24,
                     ),
-                    title: const Text(
+                    title: Text(
                       'Are you sure you want to log out?',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF1E293B),
+                        color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
                       ),
                     ),
                     onTap: () {
@@ -699,12 +649,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: Color(0xFF64748B),
                       size: 24,
                     ),
-                    title: const Text(
+                    title: Text(
                       'Cancel',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF1E293B),
+                        color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
                       ),
                     ),
                     onTap: () => Navigator.pop(context),

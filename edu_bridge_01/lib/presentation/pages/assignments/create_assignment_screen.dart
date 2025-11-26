@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../data/repositories/auth_repository.dart';
+import '../../../core/utils/pdf_helper.dart';
 
 class CreateAssignmentScreen extends StatefulWidget {
   const CreateAssignmentScreen({super.key});
@@ -20,6 +19,10 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   List<Map<String, dynamic>> _allStudents = [];
   List<String> _selectedStudents = [];
   bool _isLoadingStudents = false;
+
+  bool _isUploading = false;
+  String? _selectedAssignmentPdfBase64;
+  String? _selectedAssignmentPdfName;
 
   @override
   void initState() {
@@ -196,6 +199,63 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
               ),
             ),
           ),
+          
+          const SizedBox(height: 16),
+          
+          GestureDetector(
+            onTap: _selectAssignmentPdf,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedAssignmentPdfBase64 == null ? Colors.red.shade300 : Colors.green.shade300,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                color: _selectedAssignmentPdfBase64 == null ? Colors.red.withOpacity(0.05) : Colors.green.withOpacity(0.05),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _selectedAssignmentPdfBase64 == null ? Icons.upload_file : Icons.picture_as_pdf,
+                    color: _selectedAssignmentPdfBase64 == null ? Colors.red : Colors.green,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedAssignmentPdfBase64 == null ? 'Upload Assignment PDF *' : _selectedAssignmentPdfName ?? 'PDF selected',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: _selectedAssignmentPdfBase64 == null ? Colors.red : Colors.black,
+                            fontWeight: _selectedAssignmentPdfBase64 == null ? FontWeight.w500 : FontWeight.w600,
+                          ),
+                        ),
+                        if (_selectedAssignmentPdfBase64 == null)
+                          const Text(
+                            'Required: Upload the assignment PDF file',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (_selectedAssignmentPdfBase64 != null)
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.red),
+                      onPressed: () => setState(() {
+                        _selectedAssignmentPdfBase64 = null;
+                        _selectedAssignmentPdfName = null;
+                      }),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
         ],
       ),
     );
@@ -287,21 +347,44 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _createAssignment,
+        onPressed: _isUploading ? null : _createAssignment,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3366FF),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
-          'Create Assignment',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
+        child: _isUploading
+            ? const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Creating...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              )
+            : const Text(
+                'Create Assignment',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -318,17 +401,32 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
     }
   }
 
+
+
+
+
+  Future<void> _selectAssignmentPdf() async {
+    final result = await PdfHelper.pickPdf(context);
+    if (result != null) {
+      setState(() {
+        _selectedAssignmentPdfBase64 = result['base64'];
+        _selectedAssignmentPdfName = result['name'];
+      });
+    }
+  }
+
   Future<void> _createAssignment() async {
-    if (_formKey.currentState!.validate() && _selectedDate != null && _selectedStudents.isNotEmpty) {
+    if (_formKey.currentState!.validate() && _selectedDate != null && _selectedStudents.isNotEmpty && _selectedAssignmentPdfBase64 != null) {
+      setState(() => _isUploading = true);
+      
       try {
+        
         final assignedStudentNames = _selectedStudents.map((studentId) {
           final student = _allStudents.firstWhere((s) => s['uid'] == studentId);
-          return student['name'];
+          return student['name'] as String;
         }).toList();
         
-        print('Assigned student names: $assignedStudentNames'); // Debug
-        
-        await FirebaseFirestore.instance.collection('assignments').add({
+        final assignmentRef = await FirebaseFirestore.instance.collection('assignments').add({
           'title': _titleController.text,
           'subject': _subjectController.text,
           'description': _descriptionController.text,
@@ -336,7 +434,12 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           'assignedStudents': _selectedStudents,
           'assignedStudentNames': assignedStudentNames,
           'createdAt': DateTime.now().toIso8601String(),
+          'assignmentPdfBase64': _selectedAssignmentPdfBase64,
+          'assignmentPdfName': _selectedAssignmentPdfName,
         });
+        
+        // Send notifications to students and parents
+        await _sendAssignmentNotifications(assignmentRef.id, assignedStudentNames);
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -345,7 +448,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context, true); // Return true to indicate success
+          Navigator.pop(context, true);
         }
       } catch (e) {
         if (mounted) {
@@ -356,15 +459,68 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
             ),
           );
         }
+      } finally {
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
       }
     } else {
+      String errorMessage = 'Please complete all required fields:\n';
+      if (!_formKey.currentState!.validate()) errorMessage += '• Fill in all form fields\n';
+      if (_selectedDate == null) errorMessage += '• Select a due date\n';
+      if (_selectedStudents.isEmpty) errorMessage += '• Select students\n';
+      if (_selectedAssignmentPdfBase64 == null) errorMessage += '• Upload assignment PDF\n';
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all fields and select students'),
+        SnackBar(
+          content: Text(errorMessage.trim()),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
         ),
       );
     }
+  }
+
+  Future<void> _sendAssignmentNotifications(String assignmentId, List<String> studentNames) async {
+    final batch = FirebaseFirestore.instance.batch();
+    
+    for (String studentId in _selectedStudents) {
+      // Notification for student
+      final studentNotifRef = FirebaseFirestore.instance.collection('notifications').doc();
+      batch.set(studentNotifRef, {
+        'id': studentNotifRef.id,
+        'userId': studentId,
+        'title': 'New Assignment',
+        'message': 'You have a new assignment: ${_titleController.text}',
+        'type': 'assignment_created',
+        'createdAt': DateTime.now().toIso8601String(),
+        'isRead': false,
+        'data': {'assignmentId': assignmentId},
+      });
+      
+      // Find parent and send notification
+      final parentQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('userType', isEqualTo: 'Parent')
+          .where('childName', isEqualTo: _allStudents.firstWhere((s) => s['uid'] == studentId)['name'])
+          .get();
+      
+      for (var parentDoc in parentQuery.docs) {
+        final parentNotifRef = FirebaseFirestore.instance.collection('notifications').doc();
+        batch.set(parentNotifRef, {
+          'id': parentNotifRef.id,
+          'userId': parentDoc.id,
+          'title': 'New Assignment for ${_allStudents.firstWhere((s) => s['uid'] == studentId)['name']}',
+          'message': 'Assignment: ${_titleController.text}',
+          'type': 'assignment_created',
+          'createdAt': DateTime.now().toIso8601String(),
+          'isRead': false,
+          'data': {'assignmentId': assignmentId},
+        });
+      }
+    }
+    
+    await batch.commit();
   }
 
   @override

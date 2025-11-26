@@ -30,12 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   google_nav_bar: ^5.0.6
   flutter_staggered_animations: ^1.1.1
   google_fonts: ^6.0.0
-  cupertino_icons: ^1.0.8
-  image_picker: 
+  cupertino_icons: ^1.0.8 
 
   
   # Firebase
@@ -56,11 +57,21 @@ dependencies:
   animate_do: ^3.3.4
   lottie: ^3.1.2
   http: ^1.1.0
-  # google_fonts: ^6.2.1
+  
+  # File Operations
+  file_picker: ^8.0.0+1
+  firebase_storage: ^12.3.4
+  url_launcher: ^6.3.1
+  image_picker: ^1.0.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # Testing packages
+  bloc_test: ^9.1.7
+  mockito: ^5.4.4
+  build_runner: ^2.4.9
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

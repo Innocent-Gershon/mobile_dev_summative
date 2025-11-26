@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart' show Firebase;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
@@ -44,27 +45,41 @@ class EduBridgeApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
-          return MaterialApp(
-            title: AppStrings.appName,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeState.themeMode,
-            debugShowCheckedModeBanner: false,
-            home: BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                if (state is AuthAuthenticated) {
-                  return const MainNavigation();
-                } else if (state is AuthUnauthenticated) {
-                  return const LoginPage();
-                }
-                return const SplashScreen();
-              },
-            ),
-            routes: {
-              '/home': (context) => const MainNavigation(),
-              '/login': (context) => const LoginPage(),
-              '/email-verification': (context) =>
-                  const EmailVerificationScreen(email: ''),
+          return BlocBuilder<LanguageBloc, LanguageState>(
+            builder: (context, languageState) {
+              return MaterialApp(
+                title: AppStrings.appName,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeState.themeMode,
+                locale: Locale(languageState.language.code),
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: const [
+                  Locale('en'),
+                  Locale('fr'),
+                ],
+                debugShowCheckedModeBanner: false,
+                home: BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    if (state is AuthAuthenticated) {
+                      return const MainNavigation();
+                    } else if (state is AuthUnauthenticated) {
+                      return const LoginPage();
+                    }
+                    return const SplashScreen();
+                  },
+                ),
+                routes: {
+                  '/home': (context) => const MainNavigation(),
+                  '/login': (context) => const LoginPage(),
+                  '/email-verification': (context) =>
+                      const EmailVerificationScreen(email: ''),
+                },
+              );
             },
           );
         },

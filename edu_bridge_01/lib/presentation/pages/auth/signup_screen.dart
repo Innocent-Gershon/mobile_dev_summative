@@ -52,15 +52,17 @@ class _SignUpPageState extends State<SignUpPage> {
     if (_students.isEmpty) {
       _loadStudents();
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.5,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[850] : Colors.white,
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
@@ -89,11 +91,12 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Icon(Icons.search, color: Colors.blue.shade600, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'Find Your Student',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
                 ],
@@ -110,7 +113,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -118,10 +121,10 @@ class _SignUpPageState extends State<SignUpPage> {
                       child: _isLoadingStudents
                           ? const Center(child: CircularProgressIndicator())
                           : _students.isEmpty
-                              ? const Center(
+                              ? Center(
                                   child: Text(
                                     'No students found',
-                                    style: TextStyle(color: Colors.grey),
+                                    style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
                                   ),
                                 )
                               : ListView.builder(
@@ -143,6 +146,8 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Widget _buildStudentOption(String studentName) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return InkWell(
       onTap: () {
         _childNameController.text = studentName;
@@ -154,9 +159,9 @@ class _SignUpPageState extends State<SignUpPage> {
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? Colors.grey[800] : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -189,16 +194,17 @@ class _SignUpPageState extends State<SignUpPage> {
             Expanded(
               child: Text(
                 studentName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
+                  color: isDark ? Colors.white : Colors.black,
                 ),
               ),
             ),
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.grey.shade400,
+              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400,
             ),
           ],
         ),
@@ -226,11 +232,13 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue.shade50,
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.blue.shade50,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
           onPressed: () {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -240,13 +248,14 @@ class _SignUpPageState extends State<SignUpPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.school, size: 28, color: Theme.of(context).primaryColor),
+            Icon(Icons.school, size: 28, color: isDark ? Colors.white : Theme.of(context).primaryColor),
             const SizedBox(width: 8),
             Text(
               'EduBridge',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
+                color: isDark ? Colors.white : null,
               ),
             ),
           ],
@@ -397,7 +406,9 @@ class _SignUpPageState extends State<SignUpPage> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             _getSignupTitle(),
-                            style: Theme.of(context).textTheme.headlineMedium,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              color: isDark ? Colors.white : null,
+                            ),
                           ),
                         ),
 
@@ -407,7 +418,9 @@ class _SignUpPageState extends State<SignUpPage> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             _getSignupSubtitle(),
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: isDark ? const Color(0xFF94A3B8) : null,
+                            ),
                           ),
                         ),
 
@@ -662,7 +675,9 @@ class _SignUpPageState extends State<SignUpPage> {
                         Text.rich(
                           TextSpan(
                             text: 'By signing up, you agree to EduBridge\'s ',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: isDark ? const Color(0xFF94A3B8) : null,
+                            ),
                             children: [
                               TextSpan(
                                 text: 'Terms & Privacy Policy',
@@ -686,8 +701,8 @@ class _SignUpPageState extends State<SignUpPage> {
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 'Or Sign Up with ',
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 42, 40, 40),
+                                style: TextStyle(
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color.fromARGB(255, 42, 40, 40),
                                 ),
                               ),
                             ),
@@ -710,7 +725,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                         );
                                       },
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -727,11 +743,11 @@ class _SignUpPageState extends State<SignUpPage> {
                                     ),
                                   ),
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Google',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -745,21 +761,22 @@ class _SignUpPageState extends State<SignUpPage> {
                                     horizontal: 8,
                                     vertical: 12,
                                   ),
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.apple,
                                   size: 20,
-                                  color: Colors.black,
+                                  color: isDark ? Colors.white : Colors.black,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Apple',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -773,7 +790,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                     horizontal: 12,
                                     vertical: 12,
                                   ),
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -783,11 +801,11 @@ class _SignUpPageState extends State<SignUpPage> {
                                   size: 20,
                                   color: Colors.blue,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Facebook',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -801,10 +819,10 @@ class _SignUpPageState extends State<SignUpPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Already have an account? ',
                               style: TextStyle(
-                                color: Color.fromARGB(255, 42, 40, 40),
+                                color: isDark ? const Color(0xFF94A3B8) : const Color.fromARGB(255, 42, 40, 40),
                               ),
                             ),
                             TextButton(
@@ -820,7 +838,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 AppConstants.login,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).primaryColor,
+                                  color: isDark ? Colors.white : Theme.of(context).primaryColor,
                                 ),
                               ),
                             ),
@@ -865,7 +883,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       width: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: Colors.white.withOpacity(0.95),
+                        color: isDark ? Colors.grey[850]!.withOpacity(0.95) : Colors.white.withOpacity(0.95),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.2),
@@ -1004,6 +1022,8 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Widget _buildDropdownItem(String value, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -1022,14 +1042,14 @@ class _SignUpPageState extends State<SignUpPage> {
           children: [
             Icon(
               icon,
-              color: _selectedUserType == value ? Colors.blue : Colors.black87,
+              color: _selectedUserType == value ? Colors.blue : (isDark ? Colors.white : Colors.black87),
               size: 20,
             ),
             const SizedBox(width: 12),
             Text(
               value,
               style: TextStyle(
-                color: _selectedUserType == value ? Colors.blue : Colors.black87,
+                color: _selectedUserType == value ? Colors.blue : (isDark ? Colors.white : Colors.black87),
                 fontWeight: _selectedUserType == value
                     ? FontWeight.bold
                     : FontWeight.w500,

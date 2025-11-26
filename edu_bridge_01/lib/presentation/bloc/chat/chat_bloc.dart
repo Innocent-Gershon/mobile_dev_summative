@@ -23,14 +23,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       await _chatsSubscription?.cancel();
       _chatsSubscription = chatRepository.getChats(event.userId).listen(
         (chats) {
-          emit(ChatsLoaded(chats));
+          if (!emit.isDone) emit(ChatsLoaded(chats));
         },
         onError: (error) {
-          emit(ChatsLoaded([])); // Show empty state instead of error
+          if (!emit.isDone) emit(ChatsLoaded([])); // Show empty state instead of error
         },
       );
     } catch (e) {
-      emit(ChatsLoaded([])); // Show empty state instead of error
+      if (!emit.isDone) emit(ChatsLoaded([])); // Show empty state instead of error
     }
   }
 
@@ -38,11 +38,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       await _messagesSubscription?.cancel();
       _messagesSubscription = chatRepository.getMessages(event.chatId).listen(
-        (messages) => emit(MessagesLoaded(messages)),
-        onError: (error) => emit(ChatError(error.toString())),
+        (messages) {
+          if (!emit.isDone) emit(MessagesLoaded(messages));
+        },
+        onError: (error) {
+          if (!emit.isDone) emit(ChatError(error.toString()));
+        },
       );
     } catch (e) {
-      emit(ChatError(e.toString()));
+      if (!emit.isDone) emit(ChatError(e.toString()));
     }
   }
 

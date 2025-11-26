@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/localization/app_localizations.dart';
 import '../bloc/theme/theme_bloc.dart';
 
 class ThemeSelectorSheet extends StatelessWidget {
@@ -27,7 +28,7 @@ class ThemeSelectorSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             child: Text(
-              'Choose Theme',
+              AppLocalizations.translate(context, 'theme'),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -41,21 +42,21 @@ class ThemeSelectorSheet extends StatelessWidget {
                   children: [
                     _buildThemeOption(
                       context,
-                      'Light',
+                      AppLocalizations.translate(context, 'light_theme'),
                       Icons.light_mode,
                       state.themeName == 'Light',
                       () => context.read<ThemeBloc>().add(ThemeEvent.setLightTheme),
                     ),
                     _buildThemeOption(
                       context,
-                      'Dark',
+                      AppLocalizations.translate(context, 'dark_theme'),
                       Icons.dark_mode,
                       state.themeName == 'Dark',
                       () => context.read<ThemeBloc>().add(ThemeEvent.setDarkTheme),
                     ),
                     _buildThemeOption(
                       context,
-                      'System',
+                      AppLocalizations.translate(context, 'system_theme'),
                       Icons.settings_system_daydream,
                       state.themeName == 'System',
                       () => context.read<ThemeBloc>().add(ThemeEvent.setSystemTheme),

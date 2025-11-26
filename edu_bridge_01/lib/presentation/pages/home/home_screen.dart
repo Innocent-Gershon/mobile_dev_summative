@@ -195,13 +195,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
+      value: isDarkMode 
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8F9FA),
         body: SafeArea(
           child: _buildHomeContent(),
         ),
@@ -216,7 +217,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           pinned: true,
           floating: false,
           toolbarHeight: 80,
-          backgroundColor: const Color(0xFFF8F9FA),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           automaticallyImplyLeading: false,
           flexibleSpace: _buildProfileHeader(),
@@ -230,9 +231,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   Widget _buildProfileHeader() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      color: const Color(0xFFF8F9FA),
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Row(
         children: [
           // Avatar
@@ -241,18 +244,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             height: 56,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE0E0E0), width: 2),
+              border: Border.all(color: isDarkMode ? Colors.grey[700]! : const Color(0xFFE0E0E0), width: 2),
             ),
             child: ClipOval(
               child: Container(
-                color: const Color(0xFFFFE4E1),
+                color: isDarkMode ? Colors.grey[800] : const Color(0xFFFFE4E1),
                 child: Center(
                   child: Text(
                     _getDisplayName()[0].toUpperCase(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF333333),
+                      color: isDarkMode ? Colors.white : const Color(0xFF333333),
                     ),
                   ),
                 ),
@@ -268,10 +271,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
               children: [
                 Text(
                   _getWelcomeMessage(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF1A1A1A),
+                    color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
                     height: 1.2,
                   ),
                 ),
@@ -294,12 +297,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFEBF0FF),
+              color: isDarkMode ? Colors.grey[800] : const Color(0xFFEBF0FF),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.search_rounded,
-              color: Color(0xFF3366FF),
+              color: isDarkMode ? Colors.white : const Color(0xFF3366FF),
               size: 24,
             ),
           ),
@@ -310,15 +313,15 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFEBF0FF),
+              color: isDarkMode ? Colors.grey[800] : const Color(0xFFEBF0FF),
               shape: BoxShape.circle,
             ),
             child: Stack(
               children: [
-                const Center(
+                Center(
                   child: Icon(
                     Icons.notifications_rounded,
-                    color: Color(0xFF3366FF),
+                    color: isDarkMode ? Colors.white : const Color(0xFF3366FF),
                     size: 24,
                   ),
                 ),
@@ -344,6 +347,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   Widget _buildCategoriesSection() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -351,7 +356,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         children: [
           Container(
             height: 1,
-            color: const Color(0xFFBBBBBB),
+            color: isDarkMode ? Colors.grey[700] : const Color(0xFFBBBBBB),
             margin: const EdgeInsets.only(bottom: 20),
           ),
           Row(
@@ -361,10 +366,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 widget.userType == UserType.parent && _studentName != null 
                     ? '$_studentName\'s Progress' 
                     : 'Categories',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1A1A),
+                  color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
                   height: 1.2,
                 ),
               ),
@@ -553,6 +558,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   Widget _buildMyTaskSection() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final activeTasks = _tasks.where((task) => !task.isCompleted).toList();
     final completedTasks = _tasks.where((task) => task.isCompleted).toList();
     
@@ -565,10 +571,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             widget.userType == UserType.parent && _studentName != null 
                 ? '$_studentName\'s Tasks' 
                 : 'My Task',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A1A),
+              color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
               height: 1.2,
             ),
           ),
@@ -589,7 +595,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     onTap: () => setState(() => _taskTabIndex = 0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: _taskTabIndex == 0 ? Colors.white : Colors.transparent,
+                        color: _taskTabIndex == 0 ? (isDarkMode ? Colors.grey[800] : Colors.white) : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: _taskTabIndex == 0 ? [
                           BoxShadow(
@@ -605,7 +611,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: _taskTabIndex == 0 ? const Color(0xFF1A1A1A) : const Color(0xFF8E8E93),
+                          color: _taskTabIndex == 0 ? (isDarkMode ? Colors.white : const Color(0xFF1A1A1A)) : const Color(0xFF8E8E93),
                         ),
                       ),
                     ),
@@ -616,7 +622,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     onTap: () => setState(() => _taskTabIndex = 1),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: _taskTabIndex == 1 ? Colors.white : Colors.transparent,
+                        color: _taskTabIndex == 1 ? (isDarkMode ? Colors.grey[800] : Colors.white) : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: _taskTabIndex == 1 ? [
                           BoxShadow(
@@ -632,7 +638,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: _taskTabIndex == 1 ? const Color(0xFF1A1A1A) : const Color(0xFF8E8E93),
+                          color: _taskTabIndex == 1 ? (isDarkMode ? Colors.white : const Color(0xFF1A1A1A)) : const Color(0xFF8E8E93),
                         ),
                       ),
                     ),
@@ -698,13 +704,19 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   Widget _buildTaskCard(Task task, bool isCompleted) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isCompleted ? const Color(0xFFF8F9FA) : Colors.white,
+        color: isCompleted 
+            ? (isDarkMode ? Colors.grey[900] : const Color(0xFFF8F9FA))
+            : (isDarkMode ? Colors.grey[850] : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isCompleted ? const Color(0xFFE0E0E0) : const Color(0xFFE8E8E8), 
+          color: isCompleted 
+              ? (isDarkMode ? Colors.grey[700]! : const Color(0xFFE0E0E0))
+              : (isDarkMode ? Colors.grey[700]! : const Color(0xFFE8E8E8)), 
           width: 1
         ),
         boxShadow: [
@@ -728,7 +740,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isCompleted ? const Color(0xFF8E8E93) : const Color(0xFF1A1A1A),
+                    color: isCompleted 
+                        ? const Color(0xFF8E8E93) 
+                        : (isDarkMode ? Colors.white : const Color(0xFF1A1A1A)),
                     height: 1.3,
                     decoration: isCompleted ? TextDecoration.lineThrough : null,
                   ),
@@ -863,7 +877,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: isCompleted ? const Color(0xFF8E8E93) : const Color(0xFF1A1A1A),
+          color: isCompleted 
+              ? const Color(0xFF8E8E93) 
+              : (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1A1A1A)),
         ),
       ),
     );

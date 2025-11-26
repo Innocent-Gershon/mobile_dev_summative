@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../bloc/language/language_bloc.dart';
 import '../../../data/models/class_model.dart';
 import '../../bloc/classes/classes_bloc.dart';
 import '../../bloc/classes/classes_event.dart';
@@ -40,29 +42,35 @@ class _ClassesViewState extends State<ClassesView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F5F5),
+        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F5),
         elevation: 0,
         toolbarHeight: 80,
         title: Padding(
           padding: const EdgeInsets.only(left: 4.0),
-          child: Text(
-            widget.parentChildName != null ? '${widget.parentChildName}\'s Assignments' : 'Classes',
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-              letterSpacing: -0.5,
-            ),
+          child: BlocBuilder<LanguageBloc, LanguageState>(
+            builder: (context, languageState) {
+              return Text(
+                widget.parentChildName != null ? '${widget.parentChildName}\'s Assignments' : AppLocalizations.translate(context, 'classes'),
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black,
+                  letterSpacing: -0.5,
+                ),
+              );
+            },
           ),
         ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? Colors.grey[850] : Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -73,7 +81,7 @@ class _ClassesViewState extends State<ClassesView> {
               ],
             ),
             child: IconButton(
-              icon: Icon(_isSearching ? Icons.close : Icons.search, color: Colors.black, size: 24),
+              icon: Icon(_isSearching ? Icons.close : Icons.search, color: isDark ? Colors.white : Colors.black, size: 24),
               onPressed: () {
                 setState(() {
                   _isSearching = !_isSearching;
@@ -88,7 +96,7 @@ class _ClassesViewState extends State<ClassesView> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? Colors.grey[850] : Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -101,7 +109,7 @@ class _ClassesViewState extends State<ClassesView> {
             child: BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
                 return IconButton(
-                  icon: const Icon(Icons.add, color: Colors.black, size: 24),
+                  icon: Icon(Icons.add, color: isDark ? Colors.white : Colors.black, size: 24),
                   onPressed: () async {
                     if (state is AuthAuthenticated && state.userType == 'Teacher') {
                       final result = await Navigator.push(
@@ -135,7 +143,7 @@ class _ClassesViewState extends State<ClassesView> {
             Container(
               margin: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? Colors.grey[850] : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -148,11 +156,13 @@ class _ClassesViewState extends State<ClassesView> {
               child: TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search classes by subject...',
-                  prefixIcon: Icon(Icons.search, color: Color(0xFF8E8E93)),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.translate(context, 'search_classes'),
+                  hintStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF8E8E93)),
+                  prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF8E8E93)),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 onChanged: (value) {
                   setState(() => _searchQuery = value);
@@ -160,15 +170,19 @@ class _ClassesViewState extends State<ClassesView> {
               ),
             )
           else
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 4, 20, 16),
-              child: Text(
-                'Track project across all subject',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF8E8E93),
-                  fontWeight: FontWeight.w400,
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+              child: BlocBuilder<LanguageBloc, LanguageState>(
+                builder: (context, languageState) {
+                  return Text(
+                    AppLocalizations.translate(context, 'track_projects'),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF8E8E93),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+                },
               ),
             ),
           Expanded(

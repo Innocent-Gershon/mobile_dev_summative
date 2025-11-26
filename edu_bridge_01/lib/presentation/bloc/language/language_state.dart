@@ -2,8 +2,8 @@ part of 'language_bloc.dart';
 
 enum AppLanguage {
   english('en', 'English', '🇺🇸'),
-  kinyarwanda('rw', 'Kinyarwanda', '🇷🇼'),
-  french('fr', 'Français', '🇫🇷');
+  french('fr', 'Français', '🇫🇷'),
+  kinyarwanda('rw', 'Kinyarwanda', '🇷🇼');
 
   const AppLanguage(this.code, this.name, this.flag);
 

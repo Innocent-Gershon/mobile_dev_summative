@@ -1,10 +1,14 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FileUploadHelper {
+  // Toggle between Storage and Firestore
+  static const bool useFirestore = true; // Set to false to use Firebase Storage
   static const List<String> allowedExtensions = [
     'pdf',
     'doc',
@@ -252,8 +256,177 @@ class FileUploadHelper {
     return null;
   }
 
-  /// Upload file to Firebase Storage
+  /// Upload file to Firebase Storage or Firestore
   static Future<Map<String, String>?> uploadFile({
+    required Uint8List fileBytes,
+    required String fileName,
+    required String folderPath,
+    required BuildContext context,
+    Function(double)? onProgress,
+  }) async {
+    if (useFirestore) {
+      return _uploadToFirestore(
+        fileBytes: fileBytes,
+        fileName: fileName,
+        folderPath: folderPath,
+        context: context,
+        onProgress: onProgress,
+      );
+    } else {
+      return _uploadToStorage(
+        fileBytes: fileBytes,
+        fileName: fileName,
+        folderPath: folderPath,
+        context: context,
+        onProgress: onProgress,
+      );
+    }
+  }
+
+  /// Upload file to Firestore as base64 (FREE alternative)
+  static Future<Map<String, String>?> _uploadToFirestore({
+    required Uint8List fileBytes,
+    required String fileName,
+    required String folderPath,
+    required BuildContext context,
+    Function(double)? onProgress,
+  }) async {
+    try {
+      // Check file size (Firestore doc max 1MB)
+      if (fileBytes.length > 1024 * 1024) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File too large for Firestore (max 1MB). Using chunked storage...'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return _uploadLargeFileToFirestore(
+          fileBytes: fileBytes,
+          fileName: fileName,
+          folderPath: folderPath,
+          context: context,
+          onProgress: onProgress,
+        );
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = fileName.split('.').last;
+      final uniqueId = '${timestamp}_${fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')}';
+      
+      // Convert to base64
+      final base64String = base64Encode(fileBytes);
+      
+      // Store in Firestore
+      final docRef = FirebaseFirestore.instance
+          .collection('file_storage')
+          .doc(uniqueId);
+
+      await docRef.set({
+        'data': base64String,
+        'fileName': fileName,
+        'extension': extension,
+        'size': fileBytes.length,
+        'folderPath': folderPath,
+        'contentType': _getContentType(extension),
+        'uploadedAt': FieldValue.serverTimestamp(),
+      });
+
+      onProgress?.call(1.0);
+
+      return {
+        'url': 'firestore://$uniqueId',
+        'name': fileName,
+        'path': 'file_storage/$uniqueId',
+      };
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return null;
+    }
+  }
+
+  /// Upload large files to Firestore in chunks
+  static Future<Map<String, String>?> _uploadLargeFileToFirestore({
+    required Uint8List fileBytes,
+    required String fileName,
+    required String folderPath,
+    required BuildContext context,
+    Function(double)? onProgress,
+  }) async {
+    try {
+      const chunkSize = 900 * 1024; // 900KB chunks (safe under 1MB limit)
+      final totalChunks = (fileBytes.length / chunkSize).ceil();
+      
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = fileName.split('.').last;
+      final uniqueId = '${timestamp}_${fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')}';
+      
+      // Create metadata document
+      await FirebaseFirestore.instance
+          .collection('file_storage')
+          .doc(uniqueId)
+          .set({
+        'fileName': fileName,
+        'extension': extension,
+        'size': fileBytes.length,
+        'folderPath': folderPath,
+        'contentType': _getContentType(extension),
+        'isChunked': true,
+        'totalChunks': totalChunks,
+        'uploadedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Upload chunks
+      for (int i = 0; i < totalChunks; i++) {
+        final start = i * chunkSize;
+        final end = (start + chunkSize > fileBytes.length) 
+            ? fileBytes.length 
+            : start + chunkSize;
+        
+        final chunk = fileBytes.sublist(start, end);
+        final chunkBase64 = base64Encode(chunk);
+        
+        await FirebaseFirestore.instance
+            .collection('file_storage')
+            .doc(uniqueId)
+            .collection('chunks')
+            .doc('chunk_$i')
+            .set({
+          'data': chunkBase64,
+          'index': i,
+        });
+
+        onProgress?.call((i + 1) / totalChunks);
+      }
+
+      return {
+        'url': 'firestore://$uniqueId',
+        'name': fileName,
+        'path': 'file_storage/$uniqueId',
+      };
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return null;
+    }
+  }
+
+  /// Upload file to Firebase Storage (original method)
+  static Future<Map<String, String>?> _uploadToStorage({
     required Uint8List fileBytes,
     required String fileName,
     required String folderPath,
@@ -307,6 +480,57 @@ class FileUploadHelper {
           ),
         );
       }
+      return null;
+    }
+  }
+
+  /// Download file from Firestore
+  static Future<Uint8List?> downloadFromFirestore(String fileId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('file_storage')
+          .doc(fileId)
+          .get();
+
+      if (!doc.exists) return null;
+
+      final data = doc.data()!;
+      
+      // Check if file is chunked
+      if (data['isChunked'] == true) {
+        final totalChunks = data['totalChunks'] as int;
+        final chunks = <int, String>{};
+        
+        // Fetch all chunks
+        for (int i = 0; i < totalChunks; i++) {
+          final chunkDoc = await FirebaseFirestore.instance
+              .collection('file_storage')
+              .doc(fileId)
+              .collection('chunks')
+              .doc('chunk_$i')
+              .get();
+          
+          if (chunkDoc.exists) {
+            chunks[i] = chunkDoc.data()!['data'] as String;
+          }
+        }
+        
+        // Combine chunks
+        final sortedChunks = chunks.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
+        
+        final combinedBase64 = sortedChunks
+            .map((e) => e.value)
+            .join('');
+        
+        return base64Decode(combinedBase64);
+      } else {
+        // Single document
+        final base64String = data['data'] as String;
+        return base64Decode(base64String);
+      }
+    } catch (e) {
+      print('Error downloading from Firestore: $e');
       return null;
     }
   }

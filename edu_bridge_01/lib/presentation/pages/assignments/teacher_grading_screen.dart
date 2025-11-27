@@ -222,6 +222,72 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          // Display student's submitted attachments
+          if (submission['attachments'] != null && (submission['attachments'] as List).isNotEmpty) ...[
+            const Text(
+              'Submitted Files:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...(submission['attachments'] as List).map((attachment) {
+              final isLink = attachment['isLink'] == true;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isLink ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isLink ? Colors.blue.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isLink ? Icons.link : Icons.attach_file,
+                      color: isLink ? Colors.blue : Colors.grey[700],
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            attachment['name'] ?? 'Attachment',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                          if (!isLink && attachment['size'] != null)
+                            Text(
+                              _formatFileSize(attachment['size']),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.visibility, color: AppColors.primary),
+                      onPressed: () => _viewAttachment(attachment),
+                      tooltip: 'View',
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: 12),
+          ],
+          // Legacy PDF support (if still being used)
           if (submission['answerPdfBase64'] != null) ...[
             Container(
               padding: const EdgeInsets.all(12),
@@ -636,6 +702,56 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
       return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return 'Invalid date';
+    }
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  Future<void> _viewAttachment(Map<String, dynamic> attachment) async {
+    final isLink = attachment['isLink'] == true;
+    
+    if (isLink) {
+      // Handle link viewing
+      final url = attachment['url'];
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Opening link: $url'),
+          backgroundColor: Colors.blue,
+          action: SnackBarAction(
+            label: 'Copy',
+            textColor: Colors.white,
+            onPressed: () {
+              // Copy link functionality would go here
+            },
+          ),
+        ),
+      );
+    } else {
+      // Handle file viewing
+      try {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Opening ${attachment['name']}...'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+        
+        // TODO: Implement file viewing/download from Firestore
+        // This would involve downloading the file from the storage path
+        // and opening it with the appropriate viewer
+        
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

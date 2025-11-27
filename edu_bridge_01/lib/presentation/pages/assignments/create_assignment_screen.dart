@@ -452,8 +452,59 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
 
 
   Future<void> _pickFile() async {
-    final result = await FileUploadHelper.pickFile(context);
+    // Show source selection dialog
+    final source = await FileUploadHelper.showFileSourceDialog(context);
+    if (source == null || !mounted) return;
+
+    Map<String, dynamic>? result;
+
+    // Handle different sources
+    switch (source) {
+      case 'file':
+        result = await FileUploadHelper.pickFile(context);
+        break;
+      case 'camera':
+        result = await FileUploadHelper.pickFromCamera(context);
+        break;
+      case 'gallery':
+        result = await FileUploadHelper.pickFromGallery(context);
+        break;
+      case 'link':
+        result = await FileUploadHelper.addLink(context);
+        break;
+    }
+
     if (result != null && mounted) {
+      // If it's a link, no need to upload to Firebase Storage
+      if (result['isLink'] == true) {
+        final attachmentId = DateTime.now().millisecondsSinceEpoch.toString();
+        final attachment = AttachmentModel(
+          id: attachmentId,
+          name: result['name'],
+          url: result['url'],
+          storagePath: null, // Links don't have storage path
+          extension: 'link',
+          size: 0,
+          uploadedAt: DateTime.now(),
+          isLink: true,
+        );
+
+        setState(() {
+          _attachments.add(attachment);
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Link "${result['name']}" added successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        return;
+      }
+
+      // For actual files, upload to Firebase Storage
       setState(() => _isUploading = true);
       
       try {
@@ -486,6 +537,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
             extension: result['extension'] ?? '',
             size: result['size'],
             uploadedAt: DateTime.now(),
+            isLink: false,
           );
           
           if (mounted) {
@@ -521,7 +573,11 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   
   Future<void> _removeAttachment(AttachmentModel attachment) async {
     try {
-      await FileUploadHelper.deleteFile(attachment.storagePath);
+      // Only delete from Firebase Storage if it's not a link
+      if (!attachment.isLink && attachment.storagePath != null) {
+        await FileUploadHelper.deleteFile(attachment.storagePath!);
+      }
+      
       if (mounted) {
         setState(() {
           _attachments.remove(attachment);
@@ -537,7 +593,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to remove file: $e'),
+            content: Text('Failed to remove: $e'),
             backgroundColor: Colors.red,
           ),
         );

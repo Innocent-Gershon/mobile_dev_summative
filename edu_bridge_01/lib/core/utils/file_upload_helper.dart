@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 class FileUploadHelper {
   static const List<String> allowedExtensions = [
@@ -16,6 +17,193 @@ class FileUploadHelper {
     'png',
     'gif',
   ];
+
+  /// Show dialog to select file source
+  static Future<String?> showFileSourceDialog(BuildContext context) async {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose Source'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.folder, color: Colors.blue),
+                title: const Text('Choose File'),
+                subtitle: const Text('Select from device storage'),
+                onTap: () => Navigator.pop(context, 'file'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.green),
+                title: const Text('Take Photo'),
+                subtitle: const Text('Use camera'),
+                onTap: () => Navigator.pop(context, 'camera'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.purple),
+                title: const Text('Photo Gallery'),
+                subtitle: const Text('Choose from gallery'),
+                onTap: () => Navigator.pop(context, 'gallery'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.link, color: Colors.orange),
+                title: const Text('Add Link'),
+                subtitle: const Text('Paste URL'),
+                onTap: () => Navigator.pop(context, 'link'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Pick image from camera
+  static Future<Map<String, dynamic>?> pickFromCamera(BuildContext context) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        return {
+          'bytes': bytes,
+          'name': 'camera_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          'size': bytes.length,
+          'extension': 'jpg',
+        };
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error taking photo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+    return null;
+  }
+
+  /// Pick image from gallery
+  static Future<Map<String, dynamic>?> pickFromGallery(BuildContext context) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        return {
+          'bytes': bytes,
+          'name': image.name,
+          'size': bytes.length,
+          'extension': image.name.split('.').last,
+        };
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error selecting image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+    return null;
+  }
+
+  /// Show dialog to add a link/URL
+  static Future<Map<String, dynamic>?> addLink(BuildContext context) async {
+    final TextEditingController urlController = TextEditingController();
+    final TextEditingController titleController = TextEditingController();
+
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Link'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  hintText: 'e.g., Lecture Video',
+                  prefixIcon: Icon(Icons.title),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: urlController,
+                decoration: const InputDecoration(
+                  labelText: 'URL',
+                  hintText: 'https://...',
+                  prefixIcon: Icon(Icons.link),
+                ),
+                keyboardType: TextInputType.url,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final url = urlController.text.trim();
+                final title = titleController.text.trim();
+                
+                if (url.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('URL is required'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                // Validate URL
+                if (!Uri.tryParse(url)!.hasScheme) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Invalid URL format'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.pop(context, {
+                  'isLink': true,
+                  'url': url,
+                  'name': title.isEmpty ? url : title,
+                  'extension': 'link',
+                  'size': 0,
+                });
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   /// Pick a file with multiple format support
   static Future<Map<String, dynamic>?> pickFile(BuildContext context, {
@@ -184,6 +372,8 @@ class FileUploadHelper {
       case 'png':
       case 'gif':
         return Icons.image;
+      case 'link':
+        return Icons.link;
       default:
         return Icons.insert_drive_file;
     }
@@ -207,6 +397,8 @@ class FileUploadHelper {
       case 'png':
       case 'gif':
         return const Color(0xFF43A047);
+      case 'link':
+        return const Color(0xFF9C27B0); // Purple for links
       default:
         return const Color(0xFF757575);
     }

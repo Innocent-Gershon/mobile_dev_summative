@@ -68,19 +68,21 @@ class AttachmentModel {
   final String id;
   final String name;
   final String url;
-  final String storagePath;
+  final String? storagePath; // Optional for links
   final String extension;
   final int size;
   final DateTime uploadedAt;
+  final bool isLink; // Flag to identify if it's a link
 
   AttachmentModel({
     required this.id,
     required this.name,
     required this.url,
-    required this.storagePath,
+    this.storagePath,
     required this.extension,
     required this.size,
     required this.uploadedAt,
+    this.isLink = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -92,6 +94,7 @@ class AttachmentModel {
       'extension': extension,
       'size': size,
       'uploadedAt': uploadedAt,
+      'isLink': isLink,
     };
   }
 
@@ -100,10 +103,11 @@ class AttachmentModel {
       id: map['id'] ?? '',
       name: map['name'] ?? '',
       url: map['url'] ?? '',
-      storagePath: map['storagePath'] ?? '',
+      storagePath: map['storagePath'],
       extension: map['extension'] ?? '',
       size: map['size'] ?? 0,
       uploadedAt: (map['uploadedAt'] as Timestamp).toDate(),
+      isLink: map['isLink'] ?? false,
     );
   }
 }

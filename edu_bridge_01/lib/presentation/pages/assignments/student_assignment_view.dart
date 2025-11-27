@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_filex/open_filex.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/file_upload_helper.dart';
 import '../../../data/models/assignment_model.dart';
@@ -30,6 +33,11 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
   @override
   void initState() {
     super.initState();
+    print('📚 StudentAssignmentView initState');
+    print('Assignment data: ${widget.assignment}');
+    print('Attachments: ${widget.assignment['attachments']}');
+    print('Attachments type: ${widget.assignment['attachments'].runtimeType}');
+    print('Has PDF: ${widget.assignment['assignmentPdfBase64'] != null}');
     _loadSubmission();
   }
 
@@ -118,8 +126,8 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
-                  Icons.assignment,
+                child: Icon(
+                  _getContentIcon(widget.assignment['contentType'] ?? 'Assignment'),
                   size: 30,
                   color: AppColors.primary,
                 ),
@@ -148,6 +156,24 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
                   ],
                 ),
               ),
+              // Content Type Badge
+              if (widget.assignment['contentType'] != null && widget.assignment['contentType'] != 'Assignment')
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    widget.assignment['contentType'] ?? '',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -915,6 +941,13 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
   
   Future<void> _openAttachment(AttachmentModel attachment) async {
     try {
+      // Handle Firestore-stored files (base64)
+      if (attachment.url.startsWith('firestore://')) {
+        await _openFirestoreFile(attachment);
+        return;
+      }
+      
+      // Handle regular URLs and links
       final uri = Uri.parse(attachment.url);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -939,6 +972,96 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
       }
     }
   }
+  
+  Future<void> _openFirestoreFile(AttachmentModel attachment) async {
+    try {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text('Downloading file...'),
+              ],
+            ),
+            duration: Duration(seconds: 30),
+          ),
+        );
+      }
+      
+      // Extract file ID from firestore:// URL
+      final fileId = attachment.url.replaceFirst('firestore://', '');
+      
+      // Download file from Firestore
+      final fileBytes = await FileUploadHelper.downloadFromFirestore(fileId);
+      
+      if (fileBytes == null) {
+        throw Exception('Failed to download file');
+      }
+      
+      // Save to app's internal storage directory
+      final Directory appDocDir = await getApplicationDocumentsDirectory();
+      final String filePath = '${appDocDir.path}/${attachment.name}';
+      final file = File(filePath);
+      await file.writeAsBytes(fileBytes);
+      
+      // Open the file using OpenFilex (handles FileProvider automatically)
+      final result = await OpenFilex.open(filePath);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        
+        if (result.type == ResultType.done) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File opened successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else if (result.type == ResultType.noAppToOpen) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No app available to open this file type'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } else if (result.type == ResultType.fileNotFound) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not open file: ${result.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   String _formatDateTime(dynamic dateValue) {
     try {
@@ -953,6 +1076,29 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
       return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return 'Invalid date';
+    }
+  }
+  
+  IconData _getContentIcon(String contentType) {
+    switch (contentType) {
+      case 'Assignment':
+        return Icons.assignment;
+      case 'Book':
+        return Icons.menu_book;
+      case 'Presentation':
+        return Icons.slideshow;
+      case 'Activity':
+        return Icons.psychology;
+      case 'Project':
+        return Icons.work;
+      case 'Notes':
+        return Icons.note;
+      case 'Tutorial':
+        return Icons.play_lesson;
+      case 'Exercise':
+        return Icons.fitness_center;
+      default:
+        return Icons.description;
     }
   }
 }

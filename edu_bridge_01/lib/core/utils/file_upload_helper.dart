@@ -10,16 +10,34 @@ class FileUploadHelper {
   // Toggle between Storage and Firestore
   static const bool useFirestore = true; // Set to false to use Firebase Storage
   static const List<String> allowedExtensions = [
+    // Documents
     'pdf',
     'doc',
     'docx',
+    // Spreadsheets
+    'xls',
+    'xlsx',
+    'csv',
+    // Presentations
     'ppt',
     'pptx',
+    // Text files
     'txt',
+    // Images
     'jpg',
     'jpeg',
     'png',
     'gif',
+    'bmp',
+    'webp',
+    // Archives
+    'zip',
+    'rar',
+    // Other common formats
+    'mp4',
+    'mp3',
+    'avi',
+    'mov',
   ];
 
   /// Show dialog to select file source

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/pdf_helper.dart';
+import '../../../core/utils/file_upload_helper.dart';
+import '../../../data/models/assignment_model.dart';
 
 class StudentAssignmentView extends StatefulWidget {
   final Map<String, dynamic> assignment;
@@ -76,7 +79,11 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
           children: [
             _buildAssignmentInfo(),
             const SizedBox(height: 20),
-            if (widget.assignment['assignmentPdfBase64'] != null)
+            // Show new attachments format if available
+            if (widget.assignment['attachments'] != null && (widget.assignment['attachments'] as List).isNotEmpty)
+              _buildAttachmentsSection()
+            // Fallback to legacy PDF format for backward compatibility
+            else if (widget.assignment['assignmentPdfBase64'] != null)
               _buildAssignmentPdfSection(),
             const SizedBox(height: 20),
             _buildSubmissionSection(),
@@ -615,16 +622,148 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.download, color: Colors.red),
-                  onPressed: _downloadAssignmentPdf,
-                ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+  
+  // New method to display multi-file attachments
+  Widget _buildAttachmentsSection() {
+    final attachments = (widget.assignment['attachments'] as List)
+        .map((a) => AttachmentModel.fromMap(a as Map<String, dynamic>))
+        .toList();
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Assignment Files',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${attachments.length} file${attachments.length > 1 ? 's' : ''}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...attachments.map((attachment) => GestureDetector(
+            onTap: () => _openAttachment(attachment),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: FileUploadHelper.getFileColor(attachment.extension).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: FileUploadHelper.getFileColor(attachment.extension).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    FileUploadHelper.getFileIcon(attachment.extension),
+                    color: FileUploadHelper.getFileColor(attachment.extension),
+                    size: 40,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          attachment.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${FileUploadHelper.formatFileSize(attachment.size)} • Tap to open',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.open_in_new,
+                    color: FileUploadHelper.getFileColor(attachment.extension),
+                  ),
+                ],
+              ),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _openAttachment(AttachmentModel attachment) async {
+    try {
+      final uri = Uri.parse(attachment.url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cannot open this file'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _downloadAssignmentPdf() async {

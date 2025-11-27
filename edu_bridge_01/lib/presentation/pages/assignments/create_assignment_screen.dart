@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../core/utils/pdf_helper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/utils/file_upload_helper.dart';
+import '../../../data/models/assignment_model.dart';
 
 class CreateAssignmentScreen extends StatefulWidget {
   const CreateAssignmentScreen({super.key});
@@ -21,8 +23,8 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   bool _isLoadingStudents = false;
 
   bool _isUploading = false;
-  String? _selectedAssignmentPdfBase64;
-  String? _selectedAssignmentPdfName;
+  List<AttachmentModel> _attachments = [];
+  Map<String, double> _uploadProgress = {};
 
   @override
   void initState() {
@@ -202,58 +204,102 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           
           const SizedBox(height: 16),
           
-          GestureDetector(
-            onTap: _selectAssignmentPdf,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _selectedAssignmentPdfBase64 == null ? Colors.red.shade300 : Colors.green.shade300,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                color: _selectedAssignmentPdfBase64 == null ? Colors.red.withOpacity(0.05) : Colors.green.withOpacity(0.05),
-              ),
-              child: Row(
+          // Multi-file attachment section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    _selectedAssignmentPdfBase64 == null ? Icons.upload_file : Icons.picture_as_pdf,
-                    color: _selectedAssignmentPdfBase64 == null ? Colors.red : Colors.green,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _selectedAssignmentPdfBase64 == null ? 'Upload Assignment PDF *' : _selectedAssignmentPdfName ?? 'PDF selected',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: _selectedAssignmentPdfBase64 == null ? Colors.red : Colors.black,
-                            fontWeight: _selectedAssignmentPdfBase64 == null ? FontWeight.w500 : FontWeight.w600,
-                          ),
-                        ),
-                        if (_selectedAssignmentPdfBase64 == null)
-                          const Text(
-                            'Required: Upload the assignment PDF file',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.red,
-                            ),
-                          ),
-                      ],
+                  const Text(
+                    'Attachments *',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A),
                     ),
                   ),
-                  if (_selectedAssignmentPdfBase64 != null)
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: () => setState(() {
-                        _selectedAssignmentPdfBase64 = null;
-                        _selectedAssignmentPdfName = null;
-                      }),
-                    ),
+                  TextButton.icon(
+                    onPressed: _pickFile,
+                    icon: const Icon(Icons.attach_file),
+                    label: const Text('Add File'),
+                  ),
                 ],
               ),
-            ),
+              if (_attachments.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.red.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.red.withOpacity(0.05),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.red),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Please upload at least one file\nSupported: PDF, Word, PowerPoint, Images, Text',
+                          style: TextStyle(color: Colors.red, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ..._attachments.map((attachment) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.05),
+                    border: Border.all(color: Colors.green.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        FileUploadHelper.getFileIcon(attachment.extension),
+                        color: FileUploadHelper.getFileColor(attachment.extension),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              attachment.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              FileUploadHelper.formatFileSize(attachment.size),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            if (_uploadProgress.containsKey(attachment.id))
+                              LinearProgressIndicator(
+                                value: _uploadProgress[attachment.id],
+                                backgroundColor: Colors.grey.shade200,
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                              ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _removeAttachment(attachment),
+                      ),
+                    ],
+                  ),
+                )),
+            ],
           ),
 
         ],
@@ -405,38 +451,133 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
 
 
 
-  Future<void> _selectAssignmentPdf() async {
-    final result = await PdfHelper.pickPdf(context);
-    if (result != null) {
-      setState(() {
-        _selectedAssignmentPdfBase64 = result['base64'];
-        _selectedAssignmentPdfName = result['name'];
-      });
+  Future<void> _pickFile() async {
+    final result = await FileUploadHelper.pickFile(context);
+    if (result != null && mounted) {
+      setState(() => _isUploading = true);
+      
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) throw Exception('User not authenticated');
+        
+        final attachmentId = DateTime.now().millisecondsSinceEpoch.toString();
+        final folderPath = 'assignments/${user.uid}/$attachmentId';
+        
+        final uploadResult = await FileUploadHelper.uploadFile(
+          fileBytes: result['bytes'],
+          fileName: result['name'],
+          folderPath: folderPath,
+          context: context,
+          onProgress: (progress) {
+            if (mounted) {
+              setState(() {
+                _uploadProgress[attachmentId] = progress;
+              });
+            }
+          },
+        );
+        
+        if (uploadResult != null) {
+          final attachment = AttachmentModel(
+            id: attachmentId,
+            name: result['name'],
+            url: uploadResult['url']!,
+            storagePath: uploadResult['path']!,
+            extension: result['extension'] ?? '',
+            size: result['size'],
+            uploadedAt: DateTime.now(),
+          );
+          
+          if (mounted) {
+            setState(() {
+              _attachments.add(attachment);
+              _uploadProgress.remove(attachmentId);
+            });
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${result['name']} uploaded successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Upload failed: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
+      }
+    }
+  }
+  
+  Future<void> _removeAttachment(AttachmentModel attachment) async {
+    try {
+      await FileUploadHelper.deleteFile(attachment.storagePath);
+      if (mounted) {
+        setState(() {
+          _attachments.remove(attachment);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${attachment.name} removed'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to remove file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _createAssignment() async {
-    if (_formKey.currentState!.validate() && _selectedDate != null && _selectedStudents.isNotEmpty && _selectedAssignmentPdfBase64 != null) {
+    if (_formKey.currentState!.validate() && _selectedDate != null && _selectedStudents.isNotEmpty && _attachments.isNotEmpty) {
       setState(() => _isUploading = true);
       
       try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) throw Exception('User not authenticated');
         
         final assignedStudentNames = _selectedStudents.map((studentId) {
           final student = _allStudents.firstWhere((s) => s['uid'] == studentId);
           return student['name'] as String;
         }).toList();
         
-        final assignmentRef = await FirebaseFirestore.instance.collection('assignments').add({
-          'title': _titleController.text,
-          'subject': _subjectController.text,
-          'description': _descriptionController.text,
-          'dueDate': _selectedDate!.toIso8601String(),
-          'assignedStudents': _selectedStudents,
-          'assignedStudentNames': assignedStudentNames,
-          'createdAt': DateTime.now().toIso8601String(),
-          'assignmentPdfBase64': _selectedAssignmentPdfBase64,
-          'assignmentPdfName': _selectedAssignmentPdfName,
-        });
+        final assignmentId = FirebaseFirestore.instance.collection('assignments').doc().id;
+        
+        final assignment = AssignmentModel(
+          id: assignmentId,
+          title: _titleController.text,
+          subject: _subjectController.text,
+          description: _descriptionController.text,
+          dueDate: _selectedDate!,
+          assignedStudents: _selectedStudents,
+          teacherId: user.uid,
+          createdAt: DateTime.now(),
+          attachments: _attachments,
+        );
+        
+        await FirebaseFirestore.instance
+            .collection('assignments')
+            .doc(assignmentId)
+            .set(assignment.toMap());
+        
+        final assignmentRef = FirebaseFirestore.instance.collection('assignments').doc(assignmentId);
         
         // Send notifications to students and parents
         await _sendAssignmentNotifications(assignmentRef.id, assignedStudentNames);
@@ -469,7 +610,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       if (!_formKey.currentState!.validate()) errorMessage += '• Fill in all form fields\n';
       if (_selectedDate == null) errorMessage += '• Select a due date\n';
       if (_selectedStudents.isEmpty) errorMessage += '• Select students\n';
-      if (_selectedAssignmentPdfBase64 == null) errorMessage += '• Upload assignment PDF\n';
+      if (_attachments.isEmpty) errorMessage += '• Upload at least one file\n';
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

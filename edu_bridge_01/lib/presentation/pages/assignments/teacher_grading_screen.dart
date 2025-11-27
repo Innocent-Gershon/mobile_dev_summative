@@ -613,12 +613,19 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
     }
   }
 
-  String _formatDateTime(String dateString) {
+  String _formatDateTime(dynamic dateValue) {
     try {
-      final date = DateTime.parse(dateString);
+      DateTime date;
+      if (dateValue is Timestamp) {
+        date = dateValue.toDate();
+      } else if (dateValue is String) {
+        date = DateTime.parse(dateValue);
+      } else {
+        return 'Invalid date';
+      }
       return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
-      return dateString;
+      return 'Invalid date';
     }
   }
 }

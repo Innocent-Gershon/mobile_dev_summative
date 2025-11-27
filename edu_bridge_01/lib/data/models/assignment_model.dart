@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class AssignmentModel {
   final String id;
   final String title;
@@ -9,6 +11,7 @@ class AssignmentModel {
   final DateTime createdAt;
   final String? questionPdfUrl;
   final String? questionPdfName;
+  final List<AttachmentModel>? attachments; // Support multiple attachments
 
   AssignmentModel({
     required this.id,
@@ -21,6 +24,7 @@ class AssignmentModel {
     required this.createdAt,
     this.questionPdfUrl,
     this.questionPdfName,
+    this.attachments,
   });
 
   Map<String, dynamic> toMap() {
@@ -35,7 +39,76 @@ class AssignmentModel {
       'createdAt': createdAt,
       'questionPdfUrl': questionPdfUrl,
       'questionPdfName': questionPdfName,
+      'attachments': attachments?.map((a) => a.toMap()).toList(),
     };
+  }
+
+  factory AssignmentModel.fromMap(Map<String, dynamic> map) {
+    return AssignmentModel(
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      subject: map['subject'] ?? '',
+      dueDate: (map['dueDate'] as Timestamp).toDate(),
+      assignedStudents: List<String>.from(map['assignedStudents'] ?? []),
+      teacherId: map['teacherId'] ?? '',
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      questionPdfUrl: map['questionPdfUrl'],
+      questionPdfName: map['questionPdfName'],
+      attachments: map['attachments'] != null
+          ? (map['attachments'] as List)
+              .map((a) => AttachmentModel.fromMap(a))
+              .toList()
+          : null,
+    );
+  }
+}
+
+class AttachmentModel {
+  final String id;
+  final String name;
+  final String url;
+  final String? storagePath; // Optional for links
+  final String extension;
+  final int size;
+  final DateTime uploadedAt;
+  final bool isLink; // Flag to identify if it's a link
+
+  AttachmentModel({
+    required this.id,
+    required this.name,
+    required this.url,
+    this.storagePath,
+    required this.extension,
+    required this.size,
+    required this.uploadedAt,
+    this.isLink = false,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'url': url,
+      'storagePath': storagePath,
+      'extension': extension,
+      'size': size,
+      'uploadedAt': uploadedAt,
+      'isLink': isLink,
+    };
+  }
+
+  factory AttachmentModel.fromMap(Map<String, dynamic> map) {
+    return AttachmentModel(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      url: map['url'] ?? '',
+      storagePath: map['storagePath'],
+      extension: map['extension'] ?? '',
+      size: map['size'] ?? 0,
+      uploadedAt: (map['uploadedAt'] as Timestamp).toDate(),
+      isLink: map['isLink'] ?? false,
+    );
   }
 }
 

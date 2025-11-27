@@ -35,15 +35,18 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isLoadingStudents = false;
 
   Future<void> _loadStudents() async {
+    if (!mounted) return;
     setState(() => _isLoadingStudents = true);
     try {
       final authRepository = RepositoryProvider.of<AuthRepository>(context);
       final students = await authRepository.getAllRegisteredStudents();
       print('Loaded ${students.length} students: ${students.map((s) => s['name']).toList()}');
+      if (!mounted) return;
       setState(() => _students = students);
     } catch (e) {
       print('Error loading students: $e');
     } finally {
+      if (!mounted) return;
       setState(() => _isLoadingStudents = false);
     }
   }

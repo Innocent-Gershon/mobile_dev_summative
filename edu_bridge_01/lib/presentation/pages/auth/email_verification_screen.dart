@@ -156,7 +156,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -203,7 +203,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF667EEA).withOpacity(0.3),
+                  color: const Color(0xFF667EEA).withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -248,10 +248,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF3366FF).withOpacity(0.1),
+            color: const Color(0xFF3366FF).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFF3366FF).withOpacity(0.2),
+              color: const Color(0xFF3366FF).withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -403,7 +403,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             ),
             GestureDetector(
               onTap: () {
-                // TODO: Open support/help
                 _showSupportDialog();
               },
               child: const Text(

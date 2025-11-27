@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/constants/app_constants.dart';
+
 import '../../../core/localization/app_localizations.dart';
 import '../../bloc/language/language_bloc.dart';
 import '../../../data/models/class_model.dart';
@@ -74,7 +74,7 @@ class _ClassesViewState extends State<ClassesView> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -100,7 +100,7 @@ class _ClassesViewState extends State<ClassesView> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -147,7 +147,7 @@ class _ClassesViewState extends State<ClassesView> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -246,15 +246,15 @@ class ClassCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _getCardColor(),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.15), width: 2),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.15), width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -269,10 +269,10 @@ class ClassCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Colors.white.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     width: 1.5,
                   ),
                 ),
@@ -302,7 +302,7 @@ class ClassCard extends StatelessWidget {
                       classModel.teacher,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -329,7 +329,7 @@ class ClassCard extends StatelessWidget {
                     Container(
                       height: 8,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -362,7 +362,7 @@ class ClassCard extends StatelessWidget {
             'Next: ${classModel.nextAssignment}',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -373,7 +373,7 @@ class ClassCard extends StatelessWidget {
               'Assigned to: ${classModel.assignedStudents.take(3).join(", ")}${classModel.assignedStudents.length > 3 ? " +${classModel.assignedStudents.length - 3} more" : ""}',
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -416,7 +416,7 @@ class ClassCard extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward,
                     size: 17,
-                    color: Colors.black.withOpacity(0.8),
+                    color: Colors.black.withValues(alpha: 0.8),
                   ),
                 ],
               ),

@@ -80,7 +80,7 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, -4),
               ),

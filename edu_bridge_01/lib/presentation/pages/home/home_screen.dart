@@ -3,11 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
-import '../classes/classes_screen.dart';
-import '../settings/settings_screen.dart';
-import '../chat/chat_screen.dart';
-import '../admin/admin_dashboard_screen.dart';
-import '../admin/management_screen.dart';
+
 import '../parent/parent_dashboard_screen.dart';
 import '../../../data/repositories/auth_repository.dart';
 
@@ -93,7 +89,6 @@ class _HomeScreenContent extends StatefulWidget {
   final String userId;
 
   const _HomeScreenContent({
-    super.key,
     required this.userType,
     required this.userName,
     required this.userEmail,
@@ -105,7 +100,7 @@ class _HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<_HomeScreenContent> {
-  int _selectedIndex = 0;
+
   int _taskTabIndex = 0; // 0 for Active, 1 for Completed
   String? _studentName;
   bool _isLoadingStudentData = false;
@@ -134,7 +129,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
   }
   
-  List<Task> _tasks = [
+  final List<Task> _tasks = [
     Task(
       id: '1',
       title: 'Design task management dashboard',
@@ -464,7 +459,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3366FF).withOpacity(0.25),
+            color: const Color(0xFF3366FF).withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -493,7 +488,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     height: 1.2,
                   ),
                 ),
@@ -599,7 +594,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: _taskTabIndex == 0 ? [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
+                            color: Colors.black.withValues(alpha: 0.06),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -626,7 +621,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: _taskTabIndex == 1 ? [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
+                            color: Colors.black.withValues(alpha: 0.06),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -721,7 +716,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -865,7 +860,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     });
   }
 
-  Widget _buildTag(String text, [bool isCompleted = false]) {
+  Widget _buildTag(String text, bool isCompleted) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(

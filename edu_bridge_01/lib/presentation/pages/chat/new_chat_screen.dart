@@ -59,7 +59,7 @@ class _NewChatContentState extends State<_NewChatContent> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 1,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       leading: IconButton(
         onPressed: () => Navigator.of(context).pop(),
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
@@ -153,7 +153,7 @@ class _NewChatContentState extends State<_NewChatContent> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -192,7 +192,7 @@ class _NewChatContentState extends State<_NewChatContent> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.textSecondary.withOpacity(0.1),
+              color: AppColors.textSecondary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -268,7 +268,7 @@ class _NewChatContentState extends State<_NewChatContent> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: _getUserTypeColor(user['userType']).withOpacity(0.1),
+                              color: _getUserTypeColor(user['userType']).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -314,9 +314,9 @@ class _NewChatContentState extends State<_NewChatContent> {
       height: 48,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: _getUserTypeColor(user['userType']).withOpacity(0.1),
+        color: _getUserTypeColor(user['userType']).withValues(alpha: 0.1),
         border: Border.all(
-          color: _getUserTypeColor(user['userType']).withOpacity(0.3),
+          color: _getUserTypeColor(user['userType']).withValues(alpha: 0.3),
           width: 1,
         ),
       ),

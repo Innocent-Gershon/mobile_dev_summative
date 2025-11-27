@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
-import 'dart:convert';
 
-import '../../../core/constants/app_constants.dart';
+
 import '../../../core/localization/app_localizations.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -264,7 +261,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             border: Border.all(color: Colors.white, width: 4),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -299,7 +296,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -324,7 +321,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -496,7 +493,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF6B6B).withOpacity(0.3),
+            color: const Color(0xFFFF6B6B).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

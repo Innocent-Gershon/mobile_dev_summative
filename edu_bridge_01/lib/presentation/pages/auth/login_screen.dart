@@ -75,75 +75,79 @@ class _LoginPageState extends State<LoginPage> {
             // Show register dialog if user not found
             if (shouldShowDialog) {
               Future.delayed(const Duration(milliseconds: 800), () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    title: Row(
-                      children: [
-                        Icon(Icons.person_add, color: Theme.of(context).primaryColor),
-                        const SizedBox(width: 10),
-                        const Text('Create Account?'),
+                if (mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      title: Row(
+                        children: [
+                          Icon(Icons.person_add, color: Theme.of(context).primaryColor),
+                          const SizedBox(width: 10),
+                          const Text('Create Account?'),
+                        ],
+                      ),
+                      content: const Text('No account exists with this email address. Create a new account to get started with EduBridge!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Maybe Later'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SignUpPage(),
+                              ),
+                            );
+                          },
+                          child: const Text('Create Account'),
+                        ),
                       ],
                     ),
-                    content: const Text('No account exists with this email address. Create a new account to get started with EduBridge!'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Maybe Later'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SignUpPage(),
-                            ),
-                          );
-                        },
-                        child: const Text('Create Account'),
-                      ),
-                    ],
-                  ),
-                );
+                  );
+                }
               });
             }
             
             // Show password reset dialog for wrong password
             if (shouldShowPasswordDialog) {
               Future.delayed(const Duration(milliseconds: 800), () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    title: Row(
-                      children: [
-                        const Icon(Icons.lock_reset, color: Colors.orange),
-                        const SizedBox(width: 10),
-                        const Text('Wrong Password'),
+                if (mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      title: Row(
+                        children: [
+                          const Icon(Icons.lock_reset, color: Colors.orange),
+                          const SizedBox(width: 10),
+                          const Text('Wrong Password'),
+                        ],
+                      ),
+                      content: const Text('The password you entered is incorrect. Would you like to reset your password or try again?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Try Again'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ForgotPasswordScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                          child: const Text('Reset Password'),
+                        ),
                       ],
                     ),
-                    content: const Text('The password you entered is incorrect. Would you like to reset your password or try again?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Try Again'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ForgotPasswordScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                        child: const Text('Reset Password'),
-                      ),
-                    ],
-                  ),
-                );
+                  );
+                }
               });
             }
           } else if (state is AuthAuthenticated) {
@@ -266,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.blue.withOpacity(0.4),
+                                      color: Colors.blue.withValues(alpha: 0.4),
                                       blurRadius: 15,
                                       offset: const Offset(0, 8),
                                     ),
@@ -571,7 +575,7 @@ class _LoginPageState extends State<LoginPage> {
                                 onPressed: state is AuthLoading
                                     ? null
                                     : () {
-                                        // TODO: Apple login
+                                        // Apple login not implemented
                                       },
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
@@ -604,7 +608,7 @@ class _LoginPageState extends State<LoginPage> {
                                 onPressed: state is AuthLoading
                                     ? null
                                     : () {
-                                        // TODO: Facebook login
+                                        // Facebook login not implemented
                                       },
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
@@ -683,7 +687,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      color: Colors.black.withOpacity(0.0), // Initially transparent
+                      color: Colors.black.withValues(alpha: 0.0), // Initially transparent
                       // A BackdropFilter here will blur everything below it.
                       // Since this is above the main content, it blurs the main content.
                       child: BackdropFilter(
@@ -692,7 +696,7 @@ class _LoginPageState extends State<LoginPage> {
                           sigmaY: 5.0,
                         ), // Apply blur
                         child: Container(
-                          color: Colors.black.withOpacity(0.1), // Light overlay color
+                          color: Colors.black.withValues(alpha: 0.1), // Light overlay color
                         ),
                       ),
                     ),
@@ -710,10 +714,10 @@ class _LoginPageState extends State<LoginPage> {
                       width: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: isDark ? Colors.grey[850]!.withOpacity(0.95) : Colors.white.withOpacity(0.95),
+                        color: isDark ? Colors.grey[850]!.withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -817,7 +821,7 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _selectedUserType == value
-              ? Colors.blue.withOpacity(0.1)
+              ? Colors.blue.withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Row(

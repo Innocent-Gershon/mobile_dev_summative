@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -121,7 +120,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [const Color(0xFF3366FF), const Color(0xFF3366FF).withOpacity(0.8)],
+              colors: [const Color(0xFF3366FF), const Color(0xFF3366FF).withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -162,7 +161,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -175,7 +174,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundColor: const Color(0xFF3366FF).withOpacity(0.1),
+                backgroundColor: const Color(0xFF3366FF).withValues(alpha: 0.1),
                 child: Text(
                   studentInfo?['name']?.substring(0, 1) ?? 'S',
                   style: const TextStyle(
@@ -247,7 +246,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -316,7 +315,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -356,7 +355,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -401,7 +400,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF3366FF).withOpacity(0.1),
+              color: const Color(0xFF3366FF).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -436,7 +435,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: _getGradeColor(assignment['grade']).withOpacity(0.1),
+              color: _getGradeColor(assignment['grade']).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -470,7 +469,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -547,7 +546,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

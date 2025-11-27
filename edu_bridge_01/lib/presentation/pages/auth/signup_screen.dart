@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
@@ -39,10 +38,10 @@ class _SignUpPageState extends State<SignUpPage> {
     try {
       final authRepository = RepositoryProvider.of<AuthRepository>(context);
       final students = await authRepository.getAllRegisteredStudents();
-      print('Loaded ${students.length} students: ${students.map((s) => s['name']).toList()}');
+// print('Loaded ${students.length} students: ${students.map((s) => s['name']).toList()}');
       setState(() => _students = students);
     } catch (e) {
-      print('Error loading students: $e');
+// print('Error loading students: $e');
     } finally {
       setState(() => _isLoadingStudents = false);
     }
@@ -164,7 +163,7 @@ class _SignUpPageState extends State<SignUpPage> {
           border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -292,7 +291,8 @@ class _SignUpPageState extends State<SignUpPage> {
             
             if (shouldShowDialog) {
               Future.delayed(const Duration(milliseconds: 800), () {
-                showDialog(
+                if (mounted) {
+                  showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -319,6 +319,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ],
                   ),
                 );
+                }
               });
             } else if (isStudentNotFound) {
               showDialog(
@@ -343,7 +344,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        // TODO: Navigate to student registration
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Student registration coming soon!'),
@@ -451,7 +451,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.blue.withOpacity(0.4),
+                                      color: Colors.blue.withValues(alpha: 0.4),
                                       blurRadius: 15,
                                       offset: const Offset(0, 8),
                                     ),
@@ -861,11 +861,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      color: Colors.black.withOpacity(0.0),
+                      color: Colors.black.withValues(alpha: 0.0),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                         child: Container(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                         ),
                       ),
                     ),
@@ -883,10 +883,10 @@ class _SignUpPageState extends State<SignUpPage> {
                       width: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: isDark ? Colors.grey[850]!.withOpacity(0.95) : Colors.white.withOpacity(0.95),
+                        color: isDark ? Colors.grey[850]!.withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -1035,7 +1035,7 @@ class _SignUpPageState extends State<SignUpPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _selectedUserType == value
-              ? Colors.blue.withOpacity(0.1)
+              ? Colors.blue.withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Row(

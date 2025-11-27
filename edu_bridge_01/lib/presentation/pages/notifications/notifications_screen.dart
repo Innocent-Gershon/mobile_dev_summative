@@ -81,7 +81,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -151,10 +151,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isRead ? Colors.white : AppColors.primary.withOpacity(0.05),
+            color: isRead ? Colors.white : AppColors.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isRead ? Colors.grey.shade200 : AppColors.primary.withOpacity(0.2),
+              color: isRead ? Colors.grey.shade200 : AppColors.primary.withValues(alpha: 0.2),
             ),
           ),
           child: Row(
@@ -164,7 +164,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -237,7 +237,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             .doc(notificationId)
             .update({'isRead': true});
       } catch (e) {
-        print('Error marking notification as read: $e');
+// print('Error marking notification as read: $e');
       }
     }
   }

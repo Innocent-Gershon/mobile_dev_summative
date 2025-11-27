@@ -1,40 +1,50 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow reading users collection for student selection during signup
+    // Users collection with user type separation
     match /users/{userId} {
-      allow read: if true; // Allow anyone to read for student selection
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && 
+        (resource.data.userType == 'Admin' || 
+         resource.data.userType == 'Teacher' ||
+         (resource.data.userType == 'Parent' && request.auth.uid in resource.data.children) ||
+         resource.data.userType == 'Student');
+      
+      // Admin can read all users
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'Admin';
+      
+      // Teachers can read students and parents
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'Teacher' &&
+        (resource.data.userType == 'Student' || resource.data.userType == 'Parent');
     }
     
-    // Allow authenticated users to read and write assignments
-    match /assignments/{assignmentId} {
-      allow read, write: if request.auth != null;
+    // Students subcollection for better organization
+    match /students/{studentId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == studentId || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['Admin', 'Teacher']);
     }
     
-    // Allow authenticated users to read and write courses
-    match /courses/{courseId} {
-      allow read, write: if request.auth != null;
+    // Teachers subcollection
+    match /teachers/{teacherId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'Admin';
     }
     
-    // Allow authenticated users to read and write submissions
-    match /submissions/{submissionId} {
-      allow read, write: if request.auth != null;
+    // Parents subcollection
+    match /parents/{parentId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == parentId || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['Admin', 'Teacher']);
     }
     
-    // Allow authenticated users to read and write notifications
-    match /notifications/{notificationId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // Allow authenticated users to read and write chats
-    match /chats/{chatId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // Allow authenticated users to read and write messages
-    match /messages/{messageId} {
-      allow read, write: if request.auth != null;
+    // Admins subcollection
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'Admin';
     }
   }
 }

@@ -82,7 +82,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -137,7 +137,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -149,7 +149,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 child: Text(
                   submission['studentName'][0].toUpperCase(),
                   style: const TextStyle(
@@ -185,7 +185,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -201,7 +201,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -220,9 +220,9 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withOpacity(0.3)),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -367,6 +367,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
   }
 
   Future<void> _saveGrade(Map<String, dynamic> submission, double grade, String feedback) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       // Update submission with grade
       await FirebaseFirestore.instance
@@ -386,7 +387,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
       await _loadSubmissions();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Grade saved successfully!'),
             backgroundColor: Colors.green,
@@ -395,7 +396,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text('Error saving grade: $e'),
             backgroundColor: Colors.red,
@@ -453,8 +454,9 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
   }
 
   Future<void> _aiAssistedGrading(Map<String, dynamic> submission) async {
+    final currentContext = context;
     showDialog(
-      context: context,
+      context: currentContext,
       barrierDismissible: false,
       builder: (context) => const AlertDialog(
         content: Row(
@@ -470,13 +472,14 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
     // Simulate AI processing
     await Future.delayed(const Duration(seconds: 3));
     
-    Navigator.pop(context); // Close loading dialog
-    
-    // Generate AI suggestions
-    final aiSuggestions = _generateAISuggestions(submission);
-    
-    showDialog(
-      context: context,
+    if (mounted) {
+      Navigator.pop(currentContext); // Close loading dialog
+      
+      // Generate AI suggestions
+      final aiSuggestions = _generateAISuggestions(submission);
+      
+      showDialog(
+        context: currentContext,
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
@@ -493,7 +496,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
+                  color: Colors.purple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -558,6 +561,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
         ],
       ),
     );
+    }
   }
 
   Map<String, dynamic> _generateAISuggestions(Map<String, dynamic> submission) {
@@ -597,19 +601,23 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
 
   Future<void> _downloadPdf(Map<String, dynamic> submission) async {
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PDF download functionality would be implemented here'),
-          backgroundColor: Colors.blue,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PDF download functionality would be implemented here'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error downloading PDF: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

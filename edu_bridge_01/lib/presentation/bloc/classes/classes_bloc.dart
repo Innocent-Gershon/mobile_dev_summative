@@ -26,7 +26,7 @@ class ClassesBloc extends Bloc<ClassesEvent, ClassesState> {
             final doc = entry.value;
             final data = doc.data() as Map<String, dynamic>;
             final studentNames = List<String>.from(data['assignedStudentNames'] ?? []);
-            print('Assignment: ${data['title']}, Students: $studentNames'); // Debug
+            // print('Assignment: ${data['title']}, Students: $studentNames'); // Debug
             return ClassModel(
               id: doc.id,
               name: data['subject'] ?? 'Unknown Subject',

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/pdf_helper.dart';
-import '../../../core/utils/file_upload_helper.dart';
-import '../../../data/models/assignment_model.dart';
 
 class StudentAssignmentView extends StatefulWidget {
   final Map<String, dynamic> assignment;
@@ -79,7 +76,8 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
           children: [
             _buildAssignmentInfo(),
             const SizedBox(height: 20),
-            _buildAttachmentsSection(),
+            if (widget.assignment['assignmentPdfBase64'] != null)
+              _buildAssignmentPdfSection(),
             const SizedBox(height: 20),
             _buildSubmissionSection(),
           ],
@@ -558,160 +556,7 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
     }
   }
 
-  Widget _buildAttachmentsSection() {
-    // Get attachments from assignment data
-    final attachmentsList = widget.assignment['attachments'] as List?;
-    
-    // Fallback to legacy PDF if attachments not available
-    if (attachmentsList == null || attachmentsList.isEmpty) {
-      if (widget.assignment['assignmentPdfBase64'] != null) {
-        return _buildLegacyPdfSection();
-      }
-      return const SizedBox.shrink();
-    }
-
-    // Convert to AttachmentModel list
-    final attachments = attachmentsList
-        .map((data) => AttachmentModel.fromMap(data as Map<String, dynamic>))
-        .toList();
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.attach_file, color: Color(0xFF6366F1)),
-              const SizedBox(width: 8),
-              Text(
-                'Assignment Files (${attachments.length})',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: attachments.length,
-            itemBuilder: (context, index) {
-              final attachment = attachments[index];
-              
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () => _openAttachment(attachment),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: FileUploadHelper.getFileColor(attachment.extension).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: FileUploadHelper.getFileColor(attachment.extension).withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: FileUploadHelper.getFileColor(attachment.extension).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            FileUploadHelper.getFileIcon(attachment.extension),
-                            color: FileUploadHelper.getFileColor(attachment.extension),
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                attachment.name,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${FileUploadHelper.formatFileSize(attachment.size)} • Tap to open',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.open_in_new,
-                          color: FileUploadHelper.getFileColor(attachment.extension),
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _openAttachment(AttachmentModel attachment) async {
-    try {
-      final uri = Uri.parse(attachment.url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open file'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error opening file: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Widget _buildLegacyPdfSection() {
+  Widget _buildAssignmentPdfSection() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -761,7 +606,7 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
                         ),
                       ),
                       const Text(
-                        'Legacy PDF format',
+                        'Tap to download assignment',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey,
@@ -769,6 +614,10 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.download, color: Colors.red),
+                  onPressed: _downloadAssignmentPdf,
                 ),
               ],
             ),
@@ -778,9 +627,13 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
     );
   }
 
-  Widget _buildAssignmentPdfSection() {
-    // Deprecated - kept for backward compatibility
-    return _buildLegacyPdfSection();
+  Future<void> _downloadAssignmentPdf() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('PDF download functionality would be implemented here'),
+        backgroundColor: Colors.blue,
+      ),
+    );
   }
 
   String _formatDateTime(String dateString) {

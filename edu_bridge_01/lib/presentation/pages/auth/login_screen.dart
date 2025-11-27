@@ -38,8 +38,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
@@ -198,7 +199,7 @@ class _LoginPageState extends State<LoginPage> {
                             Icon(
                               Icons.school,
                               size: 32,
-                              color: Theme.of(context).primaryColor,
+                              color: isDark ? Colors.white : Theme.of(context).primaryColor,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -207,6 +208,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 32,
+                                    color: isDark ? Colors.white : null,
                                   ),
                             ),
                           ],
@@ -217,7 +219,9 @@ class _LoginPageState extends State<LoginPage> {
                         // Welcome back text
                         Text(
                           _getWelcomeMessage(),
-                          style: Theme.of(context).textTheme.headlineMedium,
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            color: isDark ? Colors.white : null,
+                          ),
                           textAlign: TextAlign.center,
                         ),
 
@@ -225,7 +229,9 @@ class _LoginPageState extends State<LoginPage> {
 
                         Text(
                           _getSubtitleMessage(),
-                          style: Theme.of(context).textTheme.bodyLarge,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: isDark ? const Color(0xFF94A3B8) : null,
+                          ),
                           textAlign: TextAlign.center,
                         ),
 
@@ -260,7 +266,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.blue.withValues(alpha: 0.4),
+                                      color: Colors.blue.withOpacity(0.4),
                                       blurRadius: 15,
                                       offset: const Offset(0, 8),
                                     ),
@@ -421,7 +427,12 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               );
                             },
-                            child: const Text(AppConstants.forgotPassword),
+                            child: Text(
+                              AppConstants.forgotPassword,
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
                           ),
                         ),
 
@@ -503,9 +514,8 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: Text(
                                 'Or continue with',
-                                // style: Theme.of(context).textTheme.bodyMedium,
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 42, 40, 40),
+                                style: TextStyle(
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color.fromARGB(255, 42, 40, 40),
                                 ),
                               ),
                             ),
@@ -528,7 +538,8 @@ class _LoginPageState extends State<LoginPage> {
                                         );
                                       },
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -545,11 +556,11 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Google',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -567,21 +578,22 @@ class _LoginPageState extends State<LoginPage> {
                                     horizontal: 8,
                                     vertical: 12,
                                   ),
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.apple,
                                   size: 20,
-                                  color: Colors.black,
+                                  color: isDark ? Colors.white : Colors.black,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Apple',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -599,7 +611,8 @@ class _LoginPageState extends State<LoginPage> {
                                     horizontal: 12,
                                     vertical: 12,
                                   ),
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -609,11 +622,11 @@ class _LoginPageState extends State<LoginPage> {
                                   size: 20,
                                   color: Colors.blue,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Facebook',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -627,10 +640,10 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "Don't have an account? ",
                               style: TextStyle(
-                                color: Color.fromARGB(255, 42, 40, 40),
+                                color: isDark ? const Color(0xFF94A3B8) : const Color.fromARGB(255, 42, 40, 40),
                               ),
                             ),
                             TextButton(
@@ -645,7 +658,7 @@ class _LoginPageState extends State<LoginPage> {
                                 AppConstants.signUp,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).primaryColor,
+                                  color: isDark ? Colors.white : Theme.of(context).primaryColor,
                                 ),
                               ),
                             ),
@@ -670,9 +683,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      color: Colors.black.withValues(
-                        alpha: 0.0,
-                      ), // Initially transparent
+                      color: Colors.black.withOpacity(0.0), // Initially transparent
                       // A BackdropFilter here will blur everything below it.
                       // Since this is above the main content, it blurs the main content.
                       child: BackdropFilter(
@@ -681,9 +692,7 @@ class _LoginPageState extends State<LoginPage> {
                           sigmaY: 5.0,
                         ), // Apply blur
                         child: Container(
-                          color: Colors.black.withValues(
-                            alpha: 0.1,
-                          ), // Light overlay color
+                          color: Colors.black.withOpacity(0.1), // Light overlay color
                         ),
                       ),
                     ),
@@ -701,10 +710,10 @@ class _LoginPageState extends State<LoginPage> {
                       width: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: isDark ? Colors.grey[850]!.withOpacity(0.95) : Colors.white.withOpacity(0.95),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: Colors.black.withOpacity(0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -795,6 +804,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildDropdownItem(String value, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -806,14 +817,14 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _selectedUserType == value
-              ? Colors.blue.withValues(alpha: 0.1)
+              ? Colors.blue.withOpacity(0.1)
               : Colors.transparent,
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: _selectedUserType == value ? Colors.blue : Colors.black87,
+              color: _selectedUserType == value ? Colors.blue : (isDark ? Colors.white : Colors.black87),
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -822,7 +833,7 @@ class _LoginPageState extends State<LoginPage> {
               style: TextStyle(
                 color: _selectedUserType == value
                     ? Colors.blue
-                    : Colors.black87,
+                    : (isDark ? Colors.white : Colors.black87),
                 fontWeight: _selectedUserType == value
                     ? FontWeight.bold
                     : FontWeight.w500,

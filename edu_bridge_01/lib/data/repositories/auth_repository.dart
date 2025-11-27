@@ -128,4 +128,64 @@ class AuthRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
+  
+  Future<Map<String, dynamic>?> findStudentByName(String studentName) async {
+    final cleanName = studentName.trim();
+    
+    try {
+      // First try exact match
+      var query = await _firestore
+          .collection('users')
+          .where('userType', isEqualTo: 'Student')
+          .where('name', isEqualTo: cleanName)
+          .limit(1)
+          .get();
+      
+      if (query.docs.isNotEmpty) {
+        return query.docs.first.data();
+      }
+      
+      // Try case-insensitive search by getting all students and filtering
+      final allStudents = await _firestore
+          .collection('users')
+          .where('userType', isEqualTo: 'Student')
+          .get();
+      
+      for (var doc in allStudents.docs) {
+        final data = doc.data();
+        final studentNameInDb = data['name']?.toString().trim().toLowerCase() ?? '';
+        if (studentNameInDb == cleanName.toLowerCase()) {
+          return data;
+        }
+      }
+      
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  Future<bool> isStudentRegistered(String studentName) async {
+    final student = await findStudentByName(studentName);
+    return student != null;
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllRegisteredStudents() async {
+    try {
+      print('Querying Firestore for students...');
+      final query = await _firestore
+          .collection('users')
+          .where('userType', isEqualTo: 'Student')
+          .get();
+      
+      print('Found ${query.docs.length} student documents');
+      final students = query.docs.map((doc) => doc.data()).toList();
+      print('Student names: ${students.map((s) => s['name']).toList()}');
+      
+      return students;
+    } catch (e) {
+      print('Error in getAllRegisteredStudents: $e');
+      return [];
+    }
+  }
 }

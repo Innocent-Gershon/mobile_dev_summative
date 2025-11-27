@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow reading users collection for student selection during signup
+    match /users/{userId} {
+      allow read: if true; // Allow anyone to read for student selection
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to read and write assignments
+    match /assignments/{assignmentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write courses
+    match /courses/{courseId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write submissions
+    match /submissions/{submissionId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write notifications
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write chats
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write messages
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

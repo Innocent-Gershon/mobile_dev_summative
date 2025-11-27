@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../widgets/role_selection_dialog.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../data/repositories/auth_repository.dart';
 import 'login_screen.dart';
 import 'email_verification_screen.dart';
 
@@ -24,13 +26,197 @@ class _SignUpPageState extends State<SignUpPage> {
   final _confirmPasswordController = TextEditingController();
   final _studentIdController = TextEditingController();
   final _employeeIdController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _childNameController = TextEditingController();
-  final _childClassController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _selectedUserType = AppConstants.student;
   bool _isDropdownOpen = false;
+  List<Map<String, dynamic>> _students = [];
+  bool _isLoadingStudents = false;
+
+  Future<void> _loadStudents() async {
+    setState(() => _isLoadingStudents = true);
+    try {
+      final authRepository = RepositoryProvider.of<AuthRepository>(context);
+      final students = await authRepository.getAllRegisteredStudents();
+      print('Loaded ${students.length} students: ${students.map((s) => s['name']).toList()}');
+      setState(() => _students = students);
+    } catch (e) {
+      print('Error loading students: $e');
+    } finally {
+      setState(() => _isLoadingStudents = false);
+    }
+  }
+
+  void _showStudentSearchDialog() {
+    if (_students.isEmpty) {
+      _loadStudents();
+    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.5,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[850] : Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.search, color: Colors.blue.shade600, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Find Your Student',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Registered Students',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: _isLoadingStudents
+                          ? const Center(child: CircularProgressIndicator())
+                          : _students.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No students found',
+                                    style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  itemCount: _students.length,
+                                  itemBuilder: (context, index) {
+                                    final student = _students[index];
+                                    return _buildStudentOption(student['name'] ?? 'Unknown');
+                                  },
+                                ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStudentOption(String studentName) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return InkWell(
+      onTap: () {
+        _childNameController.text = studentName;
+        Navigator.pop(context);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Center(
+                child: Text(
+                  studentName.substring(0, 1),
+                  style: TextStyle(
+                    color: Colors.blue.shade600,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                studentName,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStudents();
+  }
 
   @override
   void dispose() {
@@ -40,19 +226,19 @@ class _SignUpPageState extends State<SignUpPage> {
     _confirmPasswordController.dispose();
     _studentIdController.dispose();
     _employeeIdController.dispose();
-    _phoneController.dispose();
     _childNameController.dispose();
-    _childClassController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue.shade50,
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.blue.shade50,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
           onPressed: () {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -62,13 +248,14 @@ class _SignUpPageState extends State<SignUpPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.school, size: 28, color: Theme.of(context).primaryColor),
+            Icon(Icons.school, size: 28, color: isDark ? Colors.white : Theme.of(context).primaryColor),
             const SizedBox(width: 8),
             Text(
               'EduBridge',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
+                color: isDark ? Colors.white : null,
               ),
             ),
           ],
@@ -80,21 +267,28 @@ class _SignUpPageState extends State<SignUpPage> {
           if (state is AuthError) {
             String displayMessage = state.message;
             bool shouldShowDialog = false;
+            bool isStudentNotFound = false;
+            String studentName = '';
             
             if (state.message.startsWith('SHOW_LOGIN_DIALOG:')) {
               displayMessage = state.message.substring('SHOW_LOGIN_DIALOG:'.length);
               shouldShowDialog = true;
+            } else if (state.message.startsWith('STUDENT_NOT_FOUND:')) {
+              studentName = state.message.substring('STUDENT_NOT_FOUND:'.length);
+              isStudentNotFound = true;
             }
             
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(displayMessage),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            );
+            if (!isStudentNotFound) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(displayMessage),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }
             
             if (shouldShowDialog) {
               Future.delayed(const Duration(milliseconds: 800), () {
@@ -126,6 +320,42 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 );
               });
+            } else if (isStudentNotFound) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  title: Row(
+                    children: [
+                      const Icon(Icons.person_search, color: Colors.orange),
+                      const SizedBox(width: 10),
+                      const Text('Student Not Found'),
+                    ],
+                  ),
+                  content: Text(
+                    'No student named "$studentName" is registered in our system. Would you like to register your student first?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Try Again'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // TODO: Navigate to student registration
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Student registration coming soon!'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      },
+                      child: const Text('Register Student'),
+                    ),
+                  ],
+                ),
+              );
             }
           } else if (state is AuthAuthenticated) {
             Navigator.of(context).pushNamedAndRemoveUntil(
@@ -176,7 +406,9 @@ class _SignUpPageState extends State<SignUpPage> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             _getSignupTitle(),
-                            style: Theme.of(context).textTheme.headlineMedium,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              color: isDark ? Colors.white : null,
+                            ),
                           ),
                         ),
 
@@ -186,7 +418,9 @@ class _SignUpPageState extends State<SignUpPage> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             _getSignupSubtitle(),
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: isDark ? const Color(0xFF94A3B8) : null,
+                            ),
                           ),
                         ),
 
@@ -217,7 +451,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.blue.withValues(alpha: 0.4),
+                                      color: Colors.blue.withOpacity(0.4),
                                       blurRadius: 15,
                                       offset: const Offset(0, 8),
                                     ),
@@ -405,12 +639,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                         additionalData['employeeId'] =
                                             _employeeIdController.text.trim();
                                       } else if (_selectedUserType == AppConstants.parent) {
-                                        additionalData['phoneNumber'] =
-                                            _phoneController.text.trim();
                                         additionalData['childName'] =
                                             _childNameController.text.trim();
-                                        additionalData['childClass'] =
-                                            _childClassController.text.trim();
                                       }
 
                                       context.read<AuthBloc>().add(
@@ -445,7 +675,9 @@ class _SignUpPageState extends State<SignUpPage> {
                         Text.rich(
                           TextSpan(
                             text: 'By signing up, you agree to EduBridge\'s ',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: isDark ? const Color(0xFF94A3B8) : null,
+                            ),
                             children: [
                               TextSpan(
                                 text: 'Terms & Privacy Policy',
@@ -469,8 +701,8 @@ class _SignUpPageState extends State<SignUpPage> {
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 'Or Sign Up with ',
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 42, 40, 40),
+                                style: TextStyle(
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color.fromARGB(255, 42, 40, 40),
                                 ),
                               ),
                             ),
@@ -493,7 +725,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                         );
                                       },
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -510,11 +743,11 @@ class _SignUpPageState extends State<SignUpPage> {
                                     ),
                                   ),
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Google',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -528,21 +761,22 @@ class _SignUpPageState extends State<SignUpPage> {
                                     horizontal: 8,
                                     vertical: 12,
                                   ),
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.apple,
                                   size: 20,
-                                  color: Colors.black,
+                                  color: isDark ? Colors.white : Colors.black,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Apple',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -556,7 +790,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                     horizontal: 12,
                                     vertical: 12,
                                   ),
-                                  side: const BorderSide(color: Colors.black26),
+                                  side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),
+                                  backgroundColor: isDark ? Colors.grey[850] : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -566,11 +801,11 @@ class _SignUpPageState extends State<SignUpPage> {
                                   size: 20,
                                   color: Colors.blue,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Facebook',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ),
@@ -584,10 +819,10 @@ class _SignUpPageState extends State<SignUpPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Already have an account? ',
                               style: TextStyle(
-                                color: Color.fromARGB(255, 42, 40, 40),
+                                color: isDark ? const Color(0xFF94A3B8) : const Color.fromARGB(255, 42, 40, 40),
                               ),
                             ),
                             TextButton(
@@ -603,7 +838,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 AppConstants.login,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).primaryColor,
+                                  color: isDark ? Colors.white : Theme.of(context).primaryColor,
                                 ),
                               ),
                             ),
@@ -626,11 +861,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      color: Colors.black.withValues(alpha: 0.0),
+                      color: Colors.black.withOpacity(0.0),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                         child: Container(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: Colors.black.withOpacity(0.1),
                         ),
                       ),
                     ),
@@ -640,7 +875,7 @@ class _SignUpPageState extends State<SignUpPage> {
               // Custom Dropdown
               if (_isDropdownOpen)
                 Positioned(
-                  top: 280,
+                  top: 200,
                   right: 24,
                   child: Material(
                     color: Colors.transparent,
@@ -648,10 +883,10 @@ class _SignUpPageState extends State<SignUpPage> {
                       width: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: isDark ? Colors.grey[850]!.withOpacity(0.95) : Colors.white.withOpacity(0.95),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: Colors.black.withOpacity(0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -737,34 +972,44 @@ class _SignUpPageState extends State<SignUpPage> {
   List<Widget> _buildParentFields() {
     return [
       const SizedBox(height: 16),
-      TextFormField(
-        controller: _phoneController,
-        keyboardType: TextInputType.phone,
-        decoration: const InputDecoration(
-          labelText: AppConstants.phoneNumber,
-          prefixIcon: Icon(Icons.phone_outlined),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.shade200),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter your phone number';
-          }
-          if (!RegExp(r'^[+]?[0-9]{10,15}$')
-              .hasMatch(value.replaceAll(RegExp(r'[\s-()]'), ''))) {
-            return 'Please enter a valid phone number';
-          }
-          return null;
-        },
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Make sure to enter the exact name as registered by your student',
+                style: TextStyle(
+                  color: Colors.blue.shade700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 12),
       TextFormField(
         controller: _childNameController,
-        decoration: const InputDecoration(
-          labelText: AppConstants.childName,
-          prefixIcon: Icon(Icons.child_care_outlined),
+        decoration: InputDecoration(
+          labelText: 'Student Name',
+          prefixIcon: const Icon(Icons.child_care_outlined),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.search, color: Colors.blue),
+            onPressed: () => _showStudentSearchDialog(),
+            tooltip: 'Search for student',
+          ),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Please enter your child\'s name';
+            return 'Please enter your student\'s name';
           }
           if (value.length < 2) {
             return 'Name must be at least 2 characters';
@@ -773,23 +1018,12 @@ class _SignUpPageState extends State<SignUpPage> {
         },
       ),
       const SizedBox(height: 16),
-      TextFormField(
-        controller: _childClassController,
-        decoration: const InputDecoration(
-          labelText: AppConstants.childClass,
-          prefixIcon: Icon(Icons.class_outlined),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter your child\'s class';
-          }
-          return null;
-        },
-      ),
     ];
   }
 
   Widget _buildDropdownItem(String value, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -801,21 +1035,21 @@ class _SignUpPageState extends State<SignUpPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _selectedUserType == value
-              ? Colors.blue.withValues(alpha: 0.1)
+              ? Colors.blue.withOpacity(0.1)
               : Colors.transparent,
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: _selectedUserType == value ? Colors.blue : Colors.black87,
+              color: _selectedUserType == value ? Colors.blue : (isDark ? Colors.white : Colors.black87),
               size: 20,
             ),
             const SizedBox(width: 12),
             Text(
               value,
               style: TextStyle(
-                color: _selectedUserType == value ? Colors.blue : Colors.black87,
+                color: _selectedUserType == value ? Colors.blue : (isDark ? Colors.white : Colors.black87),
                 fontWeight: _selectedUserType == value
                     ? FontWeight.bold
                     : FontWeight.w500,

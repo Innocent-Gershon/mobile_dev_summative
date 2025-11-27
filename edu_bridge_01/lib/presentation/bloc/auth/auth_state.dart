@@ -16,17 +16,19 @@ class AuthAuthenticated extends AuthState {
   final String userId;
   final String email;
   final String name;
-  final String userType; // ✅ Added userType here
+  final String userType;
+  final String? photoUrl;
 
   const AuthAuthenticated({
     required this.userId,
     required this.email,
     required this.name,
-    required this.userType, // ✅ Added to constructor
+    required this.userType,
+    this.photoUrl,
   });
 
   @override
-  List<Object> get props => [userId, email, name, userType];
+  List<Object> get props => [userId, email, name, userType, photoUrl ?? ''];
 }
 
 class AuthUnauthenticated extends AuthState {}

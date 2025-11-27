@@ -70,7 +70,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF3366FF).withOpacity(0.08) : Colors.transparent,
+                          color: isSelected ? const Color(0xFF3366FF).withValues(alpha: 0.08) : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected ? const Color(0xFF3366FF) : const Color(0xFFE2E8F0),

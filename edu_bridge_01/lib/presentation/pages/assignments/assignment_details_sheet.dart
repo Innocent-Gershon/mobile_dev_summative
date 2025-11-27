@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import '../../../data/models/class_model.dart';
 import '../../../core/utils/image_helper.dart';
 import 'edit_assignment_screen.dart';
@@ -61,7 +61,7 @@ class _AssignmentDetailsSheetState extends State<AssignmentDetailsSheet> {
         });
       }
     } catch (e) {
-      print('Error loading assignment data: $e');
+      // print('Error loading assignment data: $e');
     }
   }
 
@@ -96,7 +96,7 @@ class _AssignmentDetailsSheetState extends State<AssignmentDetailsSheet> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: _getCardColor().withOpacity(0.1),
+                          color: _getCardColor().withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Center(
@@ -244,13 +244,13 @@ class _AssignmentDetailsSheetState extends State<AssignmentDetailsSheet> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                Container(
+                SizedBox(
                   width: 40,
                   height: 40,
                   child: ImageHelper.buildImageFromBase64(
@@ -381,9 +381,9 @@ class _AssignmentDetailsSheetState extends State<AssignmentDetailsSheet> {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _getCardColor().withOpacity(0.1),
+                  color: _getCardColor().withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _getCardColor().withOpacity(0.3)),
+                  border: Border.all(color: _getCardColor().withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   student,

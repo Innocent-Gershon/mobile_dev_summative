@@ -1,11 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/constants/app_constants.dart';
 import '../../bloc/auth/auth_bloc.dart';
@@ -29,8 +30,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isSaving = false;
   bool _isUploadingImage = false;
   
-  String? _selectedImagePath;
-  Uint8List? _selectedImageBytes;
+  String? _imageData;
   String? _imageUrl; // Firebase Storage URL
 
   @override
@@ -54,7 +54,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _nameController.text = data['name'] ?? authState.name;
           _bioController.text = data['bio'] ?? '';
           _locationController.text = data['location'] ?? '';
-          _imageUrl = data['photoUrl'];
+          
+          final photoUrl = data['photoUrl'];
+          if (photoUrl != null && photoUrl.toString().startsWith('data:image')) {
+            _imageData = photoUrl;
+            _imageUrl = null;
+          } else {
+            _imageUrl = photoUrl;
+            _imageData = null;
+          }
         } else {
           _nameController.text = authState.name;
         }
@@ -248,8 +256,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final initials = _getInitials(authState is AuthAuthenticated ? authState.name : 'User');
     
     ImageProvider? imageProvider;
-    if (_selectedImageBytes != null) {
-      imageProvider = MemoryImage(_selectedImageBytes!);
+    if (_imageData != null) {
+      final bytes = base64Decode(_imageData!.split(',')[1]);
+      imageProvider = MemoryImage(bytes);
     } else if (_imageUrl != null && _imageUrl!.isNotEmpty) {
       imageProvider = NetworkImage(_imageUrl!);
     }
@@ -264,7 +273,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             border: Border.all(color: Colors.white, width: 4),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -309,7 +318,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -363,7 +372,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -399,7 +408,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -479,16 +488,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 _buildImageSourceOption(
-                  icon: Icons.folder_open,
-                  label: 'Select from Files',
-                  subtitle: 'Choose image from your computer',
+                  icon: Icons.photo_library,
+                  label: 'Select from Gallery',
+                  subtitle: 'Choose image from your gallery',
                   onTap: () {
                     Navigator.pop(context);
-                    _uploadImageFromDevice();
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildImageSourceOption(
+                  icon: Icons.camera_alt,
+                  label: 'Take Photo',
+                  subtitle: 'Capture a new photo',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
                   },
                 ),
                 
-                if (_selectedImageBytes != null || _imageUrl != null) ...[
+                if (_imageData != null || _imageUrl != null) ...[
                   const SizedBox(height: 12),
                   _buildImageSourceOption(
                     icon: Icons.delete_outline,
@@ -581,70 +600,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Future<void> _uploadImageFromDevice() async {
+  Future<void> _pickImage(ImageSource source) async {
     try {
       setState(() => _isUploadingImage = true);
       
-      // Open file picker dialog
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-        withData: true,
-        allowedExtensions: null, // Allow all image types
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
       );
 
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        final base64String = base64Encode(bytes);
+        setState(() {
+          _imageData = 'data:image/jpeg;base64,$base64String';
+        });
         
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          throw Exception('File size must be less than 5MB');
-        }
-        
-        // Validate file type
-        final allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-        final extension = file.extension?.toLowerCase();
-        if (extension == null || !allowedTypes.contains(extension)) {
-          throw Exception('Please select a valid image file (JPG, PNG, GIF, BMP, WEBP)');
-        }
-        
-        Uint8List? fileBytes;
-        
-        if (file.bytes != null) {
-          fileBytes = file.bytes;
-        } else if (file.path != null && !kIsWeb) {
-          fileBytes = await File(file.path!).readAsBytes();
-        }
-
-        if (fileBytes != null) {
-          setState(() {
-            _selectedImagePath = file.path;
-            _selectedImageBytes = fileBytes;
-          });
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Text('Image selected: ${file.name}'),
-                  ],
-                ),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text('Image selected successfully'),
+                ],
               ),
-            );
-          }
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to select image: $e'),
+            content: Text('Failed to pick image: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -658,8 +654,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   
   void _removePhoto() {
     setState(() {
-      _selectedImagePath = null;
-      _selectedImageBytes = null;
+      _imageData = null;
       _imageUrl = null;
     });
     
@@ -680,7 +675,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<String?> _uploadImageToFirebase() async {
-    if (_selectedImageBytes == null) return _imageUrl;
+    if (_imageData == null) return _imageUrl;
     
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) return null;
@@ -689,8 +684,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final fileName = 'profile_${authState.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final ref = FirebaseStorage.instance.ref().child('profile_images/$fileName');
       
+      final bytes = base64Decode(_imageData!.split(',')[1]);
       final uploadTask = ref.putData(
-        _selectedImageBytes!,
+        bytes,
         SettableMetadata(contentType: 'image/jpeg'),
       );
       
@@ -721,13 +717,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     try {
-      String? photoUrl = _imageUrl;
-      
-      // Upload new image if selected
-      if (_selectedImageBytes != null) {
-        photoUrl = await _uploadImageToFirebase();
-      }
-
+      // Save profile data immediately with base64 image if available
       final data = <String, dynamic>{
         'name': _nameController.text.trim(),
         'bio': _bioController.text.trim(),
@@ -737,12 +727,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
-      if (photoUrl != null) {
-        data['photoUrl'] = photoUrl;
+      // Use base64 image data for immediate save
+      if (_imageData != null) {
+        data['photoUrl'] = _imageData;
+      } else if (_imageUrl != null) {
+        data['photoUrl'] = _imageUrl;
       } else {
         data['photoUrl'] = FieldValue.delete();
       }
 
+      // Save to Firestore immediately
       await FirebaseFirestore.instance.collection('users').doc(authState.userId).set(
         data,
         SetOptions(merge: true),
@@ -751,7 +745,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Update auth bloc state to reflect changes immediately
       context.read<AuthBloc>().add(UpdateUserProfile(
         name: _nameController.text.trim(),
-        photoUrl: photoUrl,
+        photoUrl: _imageData ?? _imageUrl,
       ));
 
       if (mounted) {
@@ -771,6 +765,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
         Navigator.pop(context);
       }
+
+      // Upload to Firebase Storage in background (optional optimization)
+      if (_imageData != null) {
+        _uploadImageToFirebaseInBackground(authState.userId);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -785,6 +784,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     setState(() => _isSaving = false);
+  }
+
+  // Background upload to Firebase Storage (optional)
+  void _uploadImageToFirebaseInBackground(String userId) async {
+    if (_imageData == null) return;
+    
+    try {
+      final fileName = 'profile_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ref = FirebaseStorage.instance.ref().child('profile_images/$fileName');
+      
+      final bytes = base64Decode(_imageData!.split(',')[1]);
+      final uploadTask = ref.putData(
+        bytes,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      
+      // Update Firestore with Firebase Storage URL
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'photoUrl': downloadUrl,
+      });
+    } catch (e) {
+      // Silent fail for background upload
+    }
   }
 }
 

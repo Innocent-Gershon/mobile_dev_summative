@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -94,7 +94,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF3366FF).withOpacity(0.08) : Colors.transparent,
+          color: isSelected ? const Color(0xFF3366FF).withValues(alpha: 0.08) : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -346,7 +346,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           borderRadius: BorderRadius.circular(8),
           boxShadow: isSelected ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
@@ -436,7 +436,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 22),
@@ -445,8 +445,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: change.startsWith('+') 
-                    ? const Color(0xFF10B981).withOpacity(0.1) 
-                    : const Color(0xFFEF4444).withOpacity(0.1),
+                    ? const Color(0xFF10B981).withValues(alpha: 0.1) 
+                    : const Color(0xFFEF4444).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -558,7 +558,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 22),
@@ -633,7 +633,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -694,7 +694,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -722,18 +722,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  String _getDisplayName(AuthAuthenticated authState) {
-    if (authState.name.isNotEmpty && authState.name != 'User') {
-      return authState.name;
-    }
-    if (authState.email.isNotEmpty) {
-      final emailPart = authState.email.split('@')[0];
-      return emailPart.split('.').map((word) => 
-        word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : ''
-      ).join(' ');
-    }
-    return 'Admin';
-  }
+  // String _getDisplayName(AuthAuthenticated authState) {
+  //   if (authState.name.isNotEmpty && authState.name != 'User') {
+  //     return authState.name;
+  //   }
+  //   if (authState.email.isNotEmpty) {
+  //     final emailPart = authState.email.split('@')[0];
+  //     return emailPart.split('.').map((word) => 
+  //       word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : ''
+  //     ).join(' ');
+  //   }
+  //   return 'Admin';
+  // }
 
   void _handleActionTap(String action) {
     ScaffoldMessenger.of(context).showSnackBar(

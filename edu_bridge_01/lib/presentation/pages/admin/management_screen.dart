@@ -11,16 +11,16 @@ class ManagementScreen extends StatefulWidget {
 
 class _ManagementScreenState extends State<ManagementScreen> with TickerProviderStateMixin {
   late TabController _tabController;
-  int _selectedTab = 0;
+  // int _selectedTab = 0;
   final AdminRepository _adminRepository = AdminRepository();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(() {
-      setState(() => _selectedTab = _tabController.index);
-    });
+    // _tabController.addListener(() {
+    //   setState(() => _selectedTab = _tabController.index);
+    // });
   }
 
   @override
@@ -80,7 +80,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF3366FF).withOpacity(0.1),
+              color: const Color(0xFF3366FF).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -102,7 +102,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -194,7 +194,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -206,7 +206,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -247,7 +247,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -268,7 +268,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFF3366FF).withOpacity(0.1),
+              color: const Color(0xFF3366FF).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -309,8 +309,8 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: user['status'] == 'Active' 
-                  ? const Color(0xFF34C759).withOpacity(0.1)
-                  : const Color(0xFFFF3B30).withOpacity(0.1),
+                  ? const Color(0xFF34C759).withValues(alpha: 0.1)
+                  : const Color(0xFFFF3B30).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -387,7 +387,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -410,7 +410,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3366FF).withOpacity(0.1),
+                  color: const Color(0xFF3366FF).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -526,7 +526,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -539,7 +539,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -575,7 +575,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -629,7 +629,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -647,7 +647,7 @@ class _ManagementScreenState extends State<ManagementScreen> with TickerProvider
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFF3366FF).withOpacity(0.1),
+          color: const Color(0xFF3366FF).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(setting['icon'], color: const Color(0xFF3366FF), size: 20),

@@ -16,10 +16,10 @@ class ChatRepository {
                 .toList();
           })
           .handleError((error) {
-            print('Error loading chats: $error');
+            // print('Error loading chats: $error');
           });
     } catch (e) {
-      print('Error setting up chat stream: $e');
+      // print('Error setting up chat stream: $e');
       return Stream.value(<ChatModel>[]);
     }
   }
@@ -84,7 +84,7 @@ class ChatRepository {
     final snapshot = await _firestore
         .collection('users')
         .where('name', isGreaterThanOrEqualTo: query)
-        .where('name', isLessThanOrEqualTo: query + '\uf8ff')
+        .where('name', isLessThanOrEqualTo: '$query\uf8ff')
         .limit(10)
         .get();
     

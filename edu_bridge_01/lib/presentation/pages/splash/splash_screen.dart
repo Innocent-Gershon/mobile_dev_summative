@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:animate_do/animate_do.dart';
-import 'dart:math' as math;
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/animated_next_button.dart';
 import '../../bloc/splash/splash_bloc.dart';
@@ -164,12 +163,12 @@ class _SplashPage1 extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: [
                     Colors.white,
-                    AppColors.primary.withOpacity(0.1),
+                    AppColors.primary.withValues(alpha: 0.1),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
+                    color: AppColors.primary.withValues(alpha: 0.4),
                     blurRadius: 40,
                     offset: const Offset(0, 20),
                   ),
@@ -245,12 +244,12 @@ class _SplashPage2 extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: [
                     Colors.white,
-                    AppColors.secondary.withOpacity(0.1),
+                    AppColors.secondary.withValues(alpha: 0.1),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.3),
+                    color: AppColors.secondary.withValues(alpha: 0.3),
                     blurRadius: 30,
                     offset: const Offset(-15, 15),
                   ),
@@ -321,13 +320,13 @@ class _SplashPage3 extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.9),
-                    Colors.white.withOpacity(0.7),
+                    Colors.white.withValues(alpha: 0.9),
+                    Colors.white.withValues(alpha: 0.7),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withOpacity(0.4),
+                    color: AppColors.accent.withValues(alpha: 0.4),
                     blurRadius: 50,
                     offset: const Offset(0, 25),
                   ),

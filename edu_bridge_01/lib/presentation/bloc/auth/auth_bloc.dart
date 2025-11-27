@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import '../../../data/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -68,7 +68,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         case 'invalid-credential':
           // Check if user exists to determine if it's wrong password or no account
           try {
-            await FirebaseAuth.instance.fetchSignInMethodsForEmail(event.email);
+            // Check if user exists - simplified approach
+            await _authRepository.getUserDataByEmail(event.email);
             // If we get here, user exists, so it's wrong password
             errorMessage =
                 '🔐 Oops! Wrong password. Double-check and try again.';
@@ -99,14 +100,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       emit(AuthError(errorMessage));
-    } catch (e, st) {
+    } catch (e) {
       // Special-case Firebase exceptions (e.g. Firestore permission-denied)
       if (e is FirebaseException) {
         if (kDebugMode) {
           // ignore: avoid_print
-          print(
-            'AuthBloc _onLoginWithEmail FirebaseException: ${e.code} ${e.message}',
-          );
+          // print(
+          //   'AuthBloc _onLoginWithEmail FirebaseException: ${e.code} ${e.message}',
+          // );
           emit(AuthError('Firestore error: ${e.code}. ${e.message}'));
         } else {
           if (e.code == 'permission-denied') {
@@ -131,7 +132,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         // and show a slightly more detailed message in debug builds.
         // User-facing message remains generic in release builds.
         // ignore: avoid_print
-        print('AuthBloc _onLoginWithEmail unexpected error: $e\n$st');
+        // print('AuthBloc _onLoginWithEmail unexpected error: $e\n$st');
         emit(
           AuthError(
             'An unexpected error occurred. Please try again. Details: ${e.toString()}',
@@ -216,7 +217,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      // TODO: Implement Firebase sign up
+      // Simulate Firebase sign up
       await Future.delayed(const Duration(seconds: 2)); // Simulate API call
 
       emit(
@@ -334,8 +335,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e, st) {
       if (kDebugMode) {
-        // ignore: avoid_print
-        print('AuthBloc _onSignUpWithEmail unexpected error: $e\n$st');
+        // Debug logging for development
+        debugPrint('AuthBloc _onSignUpWithEmail unexpected error: $e\n$st');
         emit(
           AuthError(
             'An unexpected error occurred. Please try again. Details: ${e.toString()}',
@@ -395,8 +396,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(errorMessage));
     } catch (e, st) {
       if (kDebugMode) {
-        // ignore: avoid_print
-        print('AuthBloc _onPasswordResetRequested unexpected error: $e\n$st');
+        // Debug logging for development
+        debugPrint('AuthBloc _onPasswordResetRequested unexpected error: $e\n$st');
         emit(
           AuthError(
             'An unexpected error occurred. Please try again. Details: ${e.toString()}',

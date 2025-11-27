@@ -19,7 +19,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   
   DateTime? _selectedDate;
   List<Map<String, dynamic>> _allStudents = [];
-  List<String> _selectedStudents = [];
+  final List<String> _selectedStudents = [];
   bool _isLoadingStudents = false;
 
   bool _isUploading = false;
@@ -127,7 +127,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -232,7 +232,36 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          GestureDetector(
+            onTap: _selectAssignmentPdf,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedAssignmentPdfBase64 == null ? Colors.red.shade300 : Colors.green.shade300,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                color: _selectedAssignmentPdfBase64 == null ? Colors.red.withValues(alpha: 0.05) : Colors.green.withValues(alpha: 0.05),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _selectedAssignmentPdfBase64 == null ? Icons.upload_file : Icons.picture_as_pdf,
+                    color: _selectedAssignmentPdfBase64 == null ? Colors.red : Colors.green,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row( main
                       children: [
                         const Icon(Icons.calendar_today, color: Colors.grey),
                         const SizedBox(width: 12),
@@ -364,7 +393,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

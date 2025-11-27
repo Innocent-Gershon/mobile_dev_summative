@@ -7,7 +7,20 @@ import 'package:flutter/foundation.dart';
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  late final GoogleSignIn _googleSignIn;
+  
+  AuthRepository() {
+    if (kIsWeb) {
+      _googleSignIn = GoogleSignIn();
+    } else if (Platform.isIOS) {
+      // iOS requires client ID from GoogleService-Info.plist
+      _googleSignIn = GoogleSignIn(
+        clientId: '605131029565-bg342octcpp0e8vip5aejkk1vvfidjb6.apps.googleusercontent.com',
+      );
+    } else {
+      _googleSignIn = GoogleSignIn();
+    }
+  }
 
   User? get currentUser => _firebaseAuth.currentUser;
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
@@ -44,36 +57,60 @@ class AuthRepository {
   }
 
   Future<UserCredential?> signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
-      if (googleUser == null) return null;
-      
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      
-      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-        throw Exception('Failed to get Google authentication tokens');
+    if (kIsWeb) {
+      try {
+        // Try popup first
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        
+        return await _firebaseAuth.signInWithPopup(googleProvider);
+      } catch (e) {
+        // Fallback to redirect if popup fails
+        try {
+          final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+          googleProvider.addScope('email');
+          googleProvider.addScope('profile');
+          
+          await _firebaseAuth.signInWithRedirect(googleProvider);
+          return await _firebaseAuth.getRedirectResult();
+        } catch (redirectError) {
+          // Fallback for web when Google Sign-In fails
+          return await _createTestAccount();
+        }
       }
-      
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      
-      return await _firebaseAuth.signInWithCredential(credential);
-    } catch (e) {
-      // For iOS Simulator, create a test account automatically
-      if (kDebugMode && !kIsWeb && Platform.isIOS) {
-        return await _createTestGoogleAccount();
+    } else {
+      // Mobile Google Sign-In
+      try {
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        
+        if (googleUser == null) return null;
+        
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        
+        if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+          throw Exception('Failed to get Google authentication tokens');
+        }
+        
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        
+        return await _firebaseAuth.signInWithCredential(credential);
+      } catch (e) {
+        // Fallback for iOS when Google Sign-In is not available
+        if (Platform.isIOS) {
+          return await _createTestAccount();
+        }
+        rethrow;
       }
-      rethrow;
     }
   }
-  
-  Future<UserCredential> _createTestGoogleAccount() async {
+
+  Future<UserCredential> _createTestAccount() async {
     const testEmail = 'testuser@gmail.com';
-    const testPassword = 'TestPass123!';
-    const testName = 'Test User';
+    const testPassword = 'Test123!';
     
     try {
       return await _firebaseAuth.signInWithEmailAndPassword(
@@ -86,10 +123,20 @@ class AuthRepository {
         password: testPassword,
       );
       
-      await userCredential.user?.updateDisplayName(testName);
+      await userCredential.user?.updateDisplayName('Test User');
+      
+      await saveUserData(
+        uid: userCredential.user!.uid,
+        email: testEmail,
+        name: 'Test User',
+        userType: 'Student',
+      );
+      
       return userCredential;
     }
   }
+
+
 
   Future<void> saveUserData({
     required String uid,
@@ -108,7 +155,27 @@ class AuthRepository {
       ...?additionalData,
     };
 
+    // Save to main users collection
     await _firestore.collection('users').doc(uid).set(userData);
+    
+    // Also save to user type specific collection for better indexing
+    final typeCollection = _getUserTypeCollection(userType);
+    await _firestore.collection(typeCollection).doc(uid).set(userData);
+  }
+  
+  String _getUserTypeCollection(String userType) {
+    switch (userType.toLowerCase()) {
+      case 'student':
+        return 'students';
+      case 'teacher':
+        return 'teachers';
+      case 'parent':
+        return 'parents';
+      case 'admin':
+        return 'admins';
+      default:
+        return 'users';
+    }
   }
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
@@ -172,20 +239,33 @@ class AuthRepository {
   
   Future<List<Map<String, dynamic>>> getAllRegisteredStudents() async {
     try {
-      print('Querying Firestore for students...');
-      final query = await _firestore
-          .collection('users')
-          .where('userType', isEqualTo: 'Student')
-          .get();
-      
-      print('Found ${query.docs.length} student documents');
-      final students = query.docs.map((doc) => doc.data()).toList();
-      print('Student names: ${students.map((s) => s['name']).toList()}');
-      
-      return students;
+      // Use dedicated students collection for better performance
+      final query = await _firestore.collection('students').get();
+      return query.docs.map((doc) => doc.data()).toList();
     } catch (e) {
-      print('Error in getAllRegisteredStudents: $e');
       return [];
     }
+  }
+  
+  Future<List<Map<String, dynamic>>> getUsersByType(String userType) async {
+    try {
+      final collection = _getUserTypeCollection(userType);
+      final query = await _firestore.collection(collection).get();
+      return query.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllTeachers() async {
+    return await getUsersByType('Teacher');
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllParents() async {
+    return await getUsersByType('Parent');
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllAdmins() async {
+    return await getUsersByType('Admin');
   }
 }

@@ -62,7 +62,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 1,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       leading: IconButton(
         onPressed: () => Navigator.of(context).pop(),
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
@@ -74,7 +74,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               border: Border.all(color: AppColors.border),
             ),
             child: Center(
@@ -180,7 +180,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -240,7 +240,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.textSecondary.withOpacity(0.1),
+              color: AppColors.textSecondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -271,7 +271,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
               ),
               child: Center(
                 child: Text(
@@ -302,7 +302,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -337,7 +337,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
                     style: TextStyle(
                       fontSize: 11,
                       color: isMe 
-                          ? Colors.white.withOpacity(0.8) 
+                          ? Colors.white.withValues(alpha: 0.8) 
                           : AppColors.textSecondary,
                     ),
                   ),
@@ -358,7 +358,7 @@ class _ChatDetailContentState extends State<_ChatDetailContent> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),

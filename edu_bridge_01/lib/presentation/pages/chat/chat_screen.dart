@@ -6,12 +6,8 @@ import '../../../core/localization/app_localizations.dart';
 import '../../bloc/language/language_bloc.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../bloc/chat/chat_bloc.dart';
-import '../../bloc/chat/chat_event.dart';
-import '../../bloc/chat/chat_state.dart';
-import '../../bloc/auth/auth_bloc.dart';
-import '../../bloc/auth/auth_state.dart';
-import '../../../data/models/chat_model.dart';
-import 'chat_detail_screen.dart';
+
+
 import 'new_chat_screen.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -279,74 +275,9 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
     );
   }
 
-  Widget _buildChatItem(ChatModel chat) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-          child: Text(
-            chat.name.isNotEmpty ? chat.name[0].toUpperCase() : 'U',
-            style: const TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        title: Text(
-          chat.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Text(
-          chat.lastMessage ?? 'No messages yet',
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: chat.lastMessageTime != null
-            ? Text(
-                _formatTime(chat.lastMessageTime!),
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              )
-            : null,
-        onTap: () => _navigateToChatDetail(chat),
-      ),
-    );
-  }
 
-  String _formatTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m';
-    } else {
-      return 'now';
-    }
-  }
 
-  void _navigateToChatDetail(ChatModel chat) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ChatDetailScreen(chat: chat),
-      ),
-    );
-  }
+
 
   void _navigateToNewChat() {
     Navigator.of(context).push(

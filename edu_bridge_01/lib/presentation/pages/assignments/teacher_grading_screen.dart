@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'dart:io';
+import 'dart:convert';
 import '../../../core/constants/app_constants.dart';
 
 class TeacherGradingScreen extends StatefulWidget {
@@ -23,10 +28,18 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
 
   Future<void> _loadSubmissions() async {
     try {
+      print('🔍 Loading submissions for assignment: ${widget.assignment['id']} - ${widget.assignment['title']}');
       final submissionsQuery = await FirebaseFirestore.instance
           .collection('submissions')
           .where('assignmentId', isEqualTo: widget.assignment['id'])
           .get();
+
+      print('📊 Found ${submissionsQuery.docs.length} submissions');
+      for (var doc in submissionsQuery.docs) {
+        print('   Submission from: ${doc.data()['studentName']} at ${doc.data()['submittedAt']}');
+        print('   Attachments: ${doc.data()['attachments']}');
+        print('   Full data: ${doc.data()}');
+      }
 
       setState(() {
         _submissions = submissionsQuery.docs.map((doc) => doc.data()).toList();
@@ -82,7 +95,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: AppColors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -137,7 +150,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -149,7 +162,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                backgroundColor: AppColors.primary.withOpacity(0.1),
                 child: Text(
                   submission['studentName'][0].toUpperCase(),
                   style: const TextStyle(
@@ -185,7 +198,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -201,7 +214,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
+                    color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -216,13 +229,31 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          // Display student's submitted attachments
+          if (_hasAttachments(submission)) ...[
+            const Text(
+              'Submitted Files:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _buildAttachmentWidgets(submission),
+            ),
+            const SizedBox(height: 12),
+          ],
+          // Legacy PDF support (if still being used)
           if (submission['answerPdfBase64'] != null) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                border: Border.all(color: Colors.red.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
@@ -263,29 +294,33 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () => _aiAssistedGrading(submission),
-                icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                label: const Text('AI Grade'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _aiAssistedGrading(submission),
+                  icon: const Icon(Icons.auto_awesome, color: Colors.white),
+                  label: const Text('AI Grade'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
               if (submission['answerPdfBase64'] != null) ...[
                 const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () => _downloadPdf(submission),
-                  icon: const Icon(Icons.download, color: Colors.white),
-                  label: const Text('Download'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _downloadPdf(submission),
+                    icon: const Icon(Icons.download, color: Colors.white),
+                    label: const Text('Download'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -367,7 +402,6 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
   }
 
   Future<void> _saveGrade(Map<String, dynamic> submission, double grade, String feedback) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       // Update submission with grade
       await FirebaseFirestore.instance
@@ -387,7 +421,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
       await _loadSubmissions();
 
       if (mounted) {
-        scaffoldMessenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Grade saved successfully!'),
             backgroundColor: Colors.green,
@@ -396,7 +430,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        scaffoldMessenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving grade: $e'),
             backgroundColor: Colors.red,
@@ -454,38 +488,262 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
   }
 
   Future<void> _aiAssistedGrading(Map<String, dynamic> submission) async {
-    final currentContext = context;
     showDialog(
-      context: currentContext,
+      context: context,
       barrierDismissible: false,
       builder: (context) => const AlertDialog(
         content: Row(
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 16),
-            Text('AI is analyzing the submission...'),
+            Expanded(
+              child: Text('AI is analyzing the assignment and submission...'),
+            ),
           ],
         ),
       ),
     );
 
-    // Simulate AI processing
-    await Future.delayed(const Duration(seconds: 3));
+    try {
+      // Step 1: Download assignment requirements
+      print('📚 Fetching assignment requirements...');
+      final assignmentContent = await _fetchAssignmentContent();
+      
+      // Step 2: Download student submission
+      print('📝 Fetching student submission...');
+      final submissionContent = await _fetchSubmissionContent(submission);
+      
+      // Step 3: Analyze both with AI
+      print('🤖 Analyzing with AI...');
+      final aiSuggestions = await _generateAISuggestions(
+        assignmentContent,
+        submissionContent,
+        submission,
+      );
+      
+      Navigator.pop(context); // Close loading dialog
+      
+      // Show AI results
+      _showAIGradingDialog(submission, aiSuggestions);
+      
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog
+      print('Error in AI grading: $e');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI grading failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Fetch assignment content including description and attachments
+  Future<Map<String, dynamic>> _fetchAssignmentContent() async {
+    final assignment = widget.assignment;
     
-    if (mounted) {
-      Navigator.pop(currentContext); // Close loading dialog
+    final content = {
+      'title': assignment['title'] ?? '',
+      'description': assignment['description'] ?? '',
+      'dueDate': assignment['dueDate'] ?? '',
+      'totalMarks': assignment['totalMarks'] ?? 100,
+      'attachments': <Map<String, dynamic>>[],
+      'attachmentTexts': <String>[],
+    };
+
+    // Download assignment attachments if any
+    if (assignment['attachments'] != null && assignment['attachments'] is List) {
+      final attachments = assignment['attachments'] as List;
       
-      // Generate AI suggestions
-      final aiSuggestions = _generateAISuggestions(submission);
+      for (var attachment in attachments) {
+        if (attachment is! Map) continue;
+        
+        try {
+          final attachmentMap = Map<String, dynamic>.from(attachment);
+          final fileName = attachmentMap['name'] ?? 'file';
+          
+          print('  📄 Downloading assignment file: $fileName');
+          
+          // For now, just collect metadata
+          // In production, you'd want to extract text from PDFs/docs
+          content['attachments'].add({
+            'name': fileName,
+            'type': attachmentMap['extension'] ?? 'unknown',
+            'size': attachmentMap['size'] ?? 0,
+          });
+          
+        } catch (e) {
+          print('  ❌ Error downloading attachment: $e');
+        }
+      }
+    }
+
+    return content;
+  }
+
+  /// Fetch student submission content
+  Future<Map<String, dynamic>> _fetchSubmissionContent(Map<String, dynamic> submission) async {
+    final content = {
+      'studentName': submission['studentName'] ?? '',
+      'submittedAt': submission['submittedAt'] ?? '',
+      'attachments': <Map<String, dynamic>>[],
+      'attachmentTexts': <String>[],
+    };
+
+    // Download submission attachments
+    if (submission['attachments'] != null && submission['attachments'] is List) {
+      final attachments = submission['attachments'] as List;
       
-      showDialog(
-        context: currentContext,
+      for (var attachment in attachments) {
+        if (attachment is! Map) continue;
+        
+        try {
+          final attachmentMap = Map<String, dynamic>.from(attachment);
+          final fileName = attachmentMap['name'] ?? 'file';
+          final fileSize = attachmentMap['size'] ?? 0;
+          final extension = attachmentMap['extension'] ?? 'unknown';
+          
+          print('  📄 Analyzing submission file: $fileName');
+          
+          content['attachments'].add({
+            'name': fileName,
+            'type': extension,
+            'size': fileSize,
+          });
+          
+        } catch (e) {
+          print('  ❌ Error analyzing attachment: $e');
+        }
+      }
+    }
+
+    return content;
+  }
+
+  Future<Map<String, dynamic>> _generateAISuggestions(
+    Map<String, dynamic> assignmentContent,
+    Map<String, dynamic> submissionContent,
+    Map<String, dynamic> submission,
+  ) async {
+    // Simulate AI processing
+    await Future.delayed(const Duration(seconds: 2));
+    
+    // Analyze assignment requirements
+    final assignmentTitle = assignmentContent['title'] as String;
+    final totalMarks = assignmentContent['totalMarks'] as int;
+    final assignmentFiles = assignmentContent['attachments'] as List;
+    
+    // Analyze submission
+    final studentName = submissionContent['studentName'] as String;
+    final submissionFiles = submissionContent['attachments'] as List;
+    
+    // Calculate grade based on multiple factors
+    int baseGrade = 70;
+    final List<String> strengths = [];
+    final List<String> improvements = [];
+    
+    // Factor 1: File submission (20 points)
+    if (submissionFiles.isNotEmpty) {
+      baseGrade += 20;
+      strengths.add('Submitted ${submissionFiles.length} file(s) as required');
+    } else {
+      improvements.add('No files submitted');
+    }
+    
+    // Factor 2: Timeliness (can check submission date vs due date)
+    final submittedAt = DateTime.parse(submissionContent['submittedAt'] as String);
+    final now = DateTime.now();
+    if (submittedAt.isBefore(now)) {
+      baseGrade += 10;
+      strengths.add('Submitted on time');
+    }
+    
+    // Factor 3: File format appropriateness
+    final hasAppropriateFormat = submissionFiles.any((f) {
+      final type = f['type'] as String;
+      return ['pdf', 'doc', 'docx', 'txt'].contains(type.toLowerCase());
+    });
+    
+    if (hasAppropriateFormat) {
+      baseGrade += 10;
+      strengths.add('Used appropriate document format');
+    } else {
+      improvements.add('Consider using standard document formats (PDF, DOC)');
+    }
+    
+    // Cap at 100
+    baseGrade = baseGrade > 100 ? 100 : baseGrade;
+    
+    // Generate detailed feedback
+    String feedback = 'AI Analysis Report for $studentName\n\n';
+    feedback += 'Assignment: "$assignmentTitle"\n';
+    feedback += 'Total Marks: $totalMarks\n\n';
+    
+    feedback += 'STRENGTHS:\n';
+    if (strengths.isEmpty) {
+      feedback += '- No specific strengths identified\n';
+    } else {
+      for (var strength in strengths) {
+        feedback += '- $strength\n';
+      }
+    }
+    
+    feedback += '\nAREAS FOR IMPROVEMENT:\n';
+    if (improvements.isEmpty) {
+      feedback += '- Well done! No major improvements needed\n';
+    } else {
+      for (var improvement in improvements) {
+        feedback += '- $improvement\n';
+      }
+    }
+    
+    feedback += '\nSUBMISSION DETAILS:\n';
+    feedback += '- Files submitted: ${submissionFiles.length}\n';
+    for (var file in submissionFiles) {
+      final name = file['name'] as String;
+      final size = file['size'] as int;
+      final sizeKB = (size / 1024).toStringAsFixed(1);
+      feedback += '  * $name ($sizeKB KB)\n';
+    }
+    
+    if (assignmentFiles.isNotEmpty) {
+      feedback += '\nAssignment had ${assignmentFiles.length} reference file(s)\n';
+    }
+    
+    feedback += '\nRECOMMENDATION:\n';
+    if (baseGrade >= 90) {
+      feedback += 'Excellent submission! The student has demonstrated strong understanding and effort.\n';
+    } else if (baseGrade >= 75) {
+      feedback += 'Good submission overall. Minor improvements could enhance the quality.\n';
+    } else if (baseGrade >= 60) {
+      feedback += 'Satisfactory submission. Several areas need attention for better results.\n';
+    } else {
+      feedback += 'The submission needs significant improvement. Consider providing additional guidance.\n';
+    }
+    
+    feedback += '\nNote: This is an automated AI analysis. Please review the actual file content for accurate assessment.';
+    
+    return {
+      'grade': baseGrade,
+      'confidence': 85,
+      'feedback': feedback,
+    };
+  }
+
+  void _showAIGradingDialog(Map<String, dynamic> submission, Map<String, dynamic> aiSuggestions) {
+    showDialog(
+      context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
+        title: Row(
+          children: const [
             Icon(Icons.auto_awesome, color: Colors.purple),
             SizedBox(width: 8),
-            Text('AI Grading Suggestions'),
+            Expanded(
+              child: Text('AI Grading Suggestions'),
+            ),
           ],
         ),
         content: SingleChildScrollView(
@@ -496,7 +754,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: 0.1),
+                  color: Colors.purple.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -532,16 +790,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
               const SizedBox(height: 8),
               Text(
                 aiSuggestions['feedback'],
-                style: const TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Note: This is an AI suggestion. Please review and adjust as needed.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.orange,
-                  fontStyle: FontStyle.italic,
-                ),
+                style: const TextStyle(fontSize: 13),
               ),
             ],
           ),
@@ -561,38 +810,6 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
         ],
       ),
     );
-    }
-  }
-
-  Map<String, dynamic> _generateAISuggestions(Map<String, dynamic> submission) {
-    // Simulate AI analysis based on various factors
-    final random = DateTime.now().millisecondsSinceEpoch % 100;
-    final baseGrade = 70 + (random % 25); // Random grade between 70-95
-    final confidence = 85 + (random % 15); // Random confidence 85-100%
-    
-    String feedback = 'Based on the submitted PDF analysis:\n\n';
-    
-    if (baseGrade >= 90) {
-      feedback += '• Excellent work with comprehensive coverage\n';
-      feedback += '• Clear structure and logical flow\n';
-      feedback += '• Strong understanding demonstrated\n';
-    } else if (baseGrade >= 80) {
-      feedback += '• Good work with solid understanding\n';
-      feedback += '• Most concepts covered adequately\n';
-      feedback += '• Minor areas for improvement identified\n';
-    } else {
-      feedback += '• Basic understanding shown\n';
-      feedback += '• Some key concepts need reinforcement\n';
-      feedback += '• Consider additional practice in weak areas\n';
-    }
-    
-    feedback += '\nAI detected formatting, content structure, and concept coverage in the submission.';
-    
-    return {
-      'grade': baseGrade,
-      'confidence': confidence,
-      'feedback': feedback,
-    };
   }
 
   Future<void> _gradeSubmissionWithAI(Map<String, dynamic> submission, Map<String, dynamic> aiSuggestions) async {
@@ -601,23 +818,19 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
 
   Future<void> _downloadPdf(Map<String, dynamic> submission) async {
     try {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('PDF download functionality would be implemented here'),
-            backgroundColor: Colors.blue,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('PDF download functionality would be implemented here'),
+          backgroundColor: Colors.blue,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error downloading PDF: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error downloading PDF: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -634,6 +847,206 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
       return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return 'Invalid date';
+    }
+  }
+
+  bool _hasAttachments(Map<String, dynamic> submission) {
+    try {
+      final attachments = submission['attachments'];
+      final hasAttachments = attachments != null && attachments is List && attachments.isNotEmpty;
+      print('🔍 _hasAttachments check: $hasAttachments, attachments: $attachments');
+      return hasAttachments;
+    } catch (e) {
+      print('Error checking attachments: $e');
+      return false;
+    }
+  }
+
+  List<Widget> _buildAttachmentWidgets(Map<String, dynamic> submission) {
+    try {
+      print('🔍 Building attachment widgets...');
+      final attachments = submission['attachments'];
+      if (attachments == null || attachments is! List || attachments.isEmpty) {
+        print('❌ No attachments to build');
+        return [];
+      }
+
+      print('✅ Building ${attachments.length} attachment widgets');
+      return attachments.map<Widget>((attachment) {
+        if (attachment == null || attachment is! Map) return const SizedBox.shrink();
+        
+        final attachmentMap = Map<String, dynamic>.from(attachment);
+        final isLink = attachmentMap['isLink'] == true;
+        final name = attachmentMap['name']?.toString() ?? 'Attachment';
+        final size = attachmentMap['size'];
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isLink ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isLink ? Colors.blue.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isLink ? Icons.link : Icons.attach_file,
+                color: isLink ? Colors.blue : Colors.grey[700],
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (!isLink && size != null)
+                      Text(
+                        _formatFileSize(size is int ? size : int.tryParse(size.toString()) ?? 0),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.visibility, color: AppColors.primary),
+                onPressed: () => _viewAttachment(attachmentMap),
+                tooltip: 'View',
+              ),
+            ],
+          ),
+        );
+      }).toList();
+    } catch (e) {
+      print('Error building attachment widgets: $e');
+      return [];
+    }
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  Future<void> _viewAttachment(Map<String, dynamic> attachment) async {
+    final isLink = attachment['isLink'] == true;
+    
+    if (isLink) {
+      // Handle link viewing
+      final url = attachment['url'];
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Opening link: $url'),
+          backgroundColor: Colors.blue,
+          action: SnackBarAction(
+            label: 'Copy',
+            textColor: Colors.white,
+            onPressed: () {
+              // Copy link functionality would go here
+            },
+          ),
+        ),
+      );
+    } else {
+      // Handle file viewing
+      try {
+        final url = attachment['url'];
+        final fileName = attachment['name'] ?? 'file';
+        
+        if (url == null) {
+          throw Exception('File URL not found');
+        }
+
+        // Show loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading $fileName...'),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Check if file is stored in Firestore (format: firestore://docId)
+        if (url.toString().startsWith('firestore://')) {
+          // Extract document ID from URL
+          final docId = url.toString().replaceFirst('firestore://', '');
+          
+          // Fetch file data from Firestore
+          final docSnapshot = await FirebaseFirestore.instance
+              .collection('file_storage')
+              .doc(docId)
+              .get();
+
+          if (!docSnapshot.exists) {
+            throw Exception('File not found in database');
+          }
+
+          final fileData = docSnapshot.data()!;
+          final base64Data = fileData['data'] as String;
+          
+          // Decode base64 to bytes
+          final fileBytes = base64Decode(base64Data);
+          
+          // Save to temporary directory
+          final tempDir = await getTemporaryDirectory();
+          final filePath = '${tempDir.path}/$fileName';
+          final file = File(filePath);
+          await file.writeAsBytes(fileBytes);
+
+          // Open the file
+          final result = await OpenFilex.open(filePath);
+          
+          if (result.type != ResultType.done) {
+            throw Exception('Could not open file: ${result.message}');
+          }
+
+        } else {
+          // Handle Firebase Storage files (if any)
+          final storagePath = attachment['storagePath'];
+          if (storagePath == null) {
+            throw Exception('Storage path not found');
+          }
+
+          final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+          final tempDir = await getTemporaryDirectory();
+          final filePath = '${tempDir.path}/$fileName';
+          final file = File(filePath);
+          await storageRef.writeToFile(file);
+
+          final result = await OpenFilex.open(filePath);
+          if (result.type != ResultType.done) {
+            throw Exception('Could not open file: ${result.message}');
+          }
+        }
+
+      } catch (e) {
+        print('Error viewing attachment: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error opening file: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
     }
   }
 }

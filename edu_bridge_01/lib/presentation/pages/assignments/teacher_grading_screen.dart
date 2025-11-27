@@ -23,10 +23,16 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
 
   Future<void> _loadSubmissions() async {
     try {
+      print('🔍 Loading submissions for assignment: ${widget.assignment['id']} - ${widget.assignment['title']}');
       final submissionsQuery = await FirebaseFirestore.instance
           .collection('submissions')
           .where('assignmentId', isEqualTo: widget.assignment['id'])
           .get();
+
+      print('📊 Found ${submissionsQuery.docs.length} submissions');
+      for (var doc in submissionsQuery.docs) {
+        print('   Submission from: ${doc.data()['studentName']} at ${doc.data()['submittedAt']}');
+      }
 
       setState(() {
         _submissions = submissionsQuery.docs.map((doc) => doc.data()).toList();
@@ -263,29 +269,33 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () => _aiAssistedGrading(submission),
-                icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                label: const Text('AI Grade'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _aiAssistedGrading(submission),
+                  icon: const Icon(Icons.auto_awesome, color: Colors.white),
+                  label: const Text('AI Grade'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
               if (submission['answerPdfBase64'] != null) ...[
                 const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () => _downloadPdf(submission),
-                  icon: const Icon(Icons.download, color: Colors.white),
-                  label: const Text('Download'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _downloadPdf(submission),
+                    icon: const Icon(Icons.download, color: Colors.white),
+                    label: const Text('Download'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),

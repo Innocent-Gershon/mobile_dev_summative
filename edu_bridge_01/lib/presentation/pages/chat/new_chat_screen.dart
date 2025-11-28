@@ -281,13 +281,15 @@ class _NewChatContentState extends State<_NewChatContent> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            user['email'] ?? '',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
+                          Expanded(
+                            child: Text(
+                              user['email'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),

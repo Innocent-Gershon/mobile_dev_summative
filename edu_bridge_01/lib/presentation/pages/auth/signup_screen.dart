@@ -132,7 +132,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               onPressed: () {
                                 searchController.clear();
                                 setModalState(() {
-                                  filteredStudents = List.from(_students);
+                                  // Trigger rebuild to clear search
                                 });
                               },
                             )
@@ -144,19 +144,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     onChanged: (query) {
                       setModalState(() {
-                        if (query.isEmpty) {
-                          filteredStudents = List.from(_students);
-                        } else {
-                          filteredStudents = _students.where((student) {
-                            final name = student['name']?.toString().toLowerCase() ?? '';
-                            final email = student['email']?.toString().toLowerCase() ?? '';
-                            final studentClass = student['studentClass']?.toString().toLowerCase() ?? '';
-                            final searchLower = query.toLowerCase();
-                            return name.contains(searchLower) || 
-                                   email.contains(searchLower) || 
-                                   studentClass.contains(searchLower);
-                          }).toList();
-                        }
+                        // Trigger rebuild of StreamBuilder with new search query
                       });
                     },
                   ),

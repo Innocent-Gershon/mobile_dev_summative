@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../data/models/chat_model.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
 
@@ -17,36 +18,40 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<SearchUsers>(_onSearchUsers);
   }
 
-  void _onLoadChats(LoadChats event, Emitter<ChatState> emit) async {
+  Future<void> _onLoadChats(LoadChats event, Emitter<ChatState> emit) async {
+    print('ChatBloc: Loading chats for user ${event.userId}');
     emit(ChatLoading());
     try {
       await _chatsSubscription?.cancel();
-      _chatsSubscription = chatRepository.getChats(event.userId).listen(
-        (chats) {
-          if (!emit.isDone) emit(ChatsLoaded(chats));
+      print('ChatBloc: Setting up chats stream');
+      await emit.forEach<List<ChatModel>>(
+        chatRepository.getChats(event.userId),
+        onData: (chats) {
+          print('ChatBloc: Received ${chats.length} chats from repository');
+          print('ChatBloc: Emitting ChatsLoaded state');
+          return ChatsLoaded(chats);
         },
-        onError: (error) {
-          if (!emit.isDone) emit(ChatsLoaded([])); // Show empty state instead of error
+        onError: (error, stackTrace) {
+          print('ChatBloc: Error loading chats: $error');
+          return ChatsLoaded([]); // Show empty state instead of error
         },
       );
     } catch (e) {
-      if (!emit.isDone) emit(ChatsLoaded([])); // Show empty state instead of error
+      print('ChatBloc: Exception loading chats: $e');
+      emit(ChatsLoaded([])); // Show empty state instead of error
     }
   }
 
-  void _onLoadMessages(LoadMessages event, Emitter<ChatState> emit) async {
+  Future<void> _onLoadMessages(LoadMessages event, Emitter<ChatState> emit) async {
     try {
       await _messagesSubscription?.cancel();
-      _messagesSubscription = chatRepository.getMessages(event.chatId).listen(
-        (messages) {
-          if (!emit.isDone) emit(MessagesLoaded(messages));
-        },
-        onError: (error) {
-          if (!emit.isDone) emit(ChatError(error.toString()));
-        },
+      await emit.forEach<List<MessageModel>>(
+        chatRepository.getMessages(event.chatId),
+        onData: (messages) => MessagesLoaded(messages),
+        onError: (error, stackTrace) => ChatError(error.toString()),
       );
     } catch (e) {
-      if (!emit.isDone) emit(ChatError(e.toString()));
+      emit(ChatError(e.toString()));
     }
   }
 

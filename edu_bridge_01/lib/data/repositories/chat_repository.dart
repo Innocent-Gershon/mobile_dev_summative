@@ -5,21 +5,33 @@ class ChatRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Stream<List<ChatModel>> getChats(String userId) {
+    print('ChatRepository: Getting chats for user $userId');
     try {
       return _firestore
           .collection('chats')
           .where('participants', arrayContains: userId)
           .snapshots()
           .map((snapshot) {
+            print('ChatRepository: Received ${snapshot.docs.length} chat documents');
             return snapshot.docs
-                .map((doc) => ChatModel.fromMap({...doc.data(), 'id': doc.id}))
+                .map((doc) {
+                  try {
+                    final data = {...doc.data(), 'id': doc.id};
+                    print('ChatRepository: Processing chat doc ${doc.id}: $data');
+                    return ChatModel.fromMap(data);
+                  } catch (e) {
+                    print('ChatRepository: Error parsing chat ${doc.id}: $e');
+                    return null;
+                  }
+                })
+                .whereType<ChatModel>()
                 .toList();
           })
           .handleError((error) {
-            // print('Error loading chats: $error');
+            print('ChatRepository: Stream error: $error');
           });
     } catch (e) {
-      // print('Error setting up chat stream: $e');
+      print('ChatRepository: Exception in getChats: $e');
       return Stream.value(<ChatModel>[]);
     }
   }

@@ -56,100 +56,162 @@ class _SignUpPageState extends State<SignUpPage> {
       _loadStudents();
     }
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final searchController = TextEditingController();
+    List<Map<String, dynamic>> filteredStudents = List.from(_students);
     
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.5,
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[850] : Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[850] : Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.search, color: Colors.blue.shade600, size: 20),
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Find Your Student',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.search, color: Colors.blue.shade600, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Find Your Student',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Registered Students',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                ),
+                
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by name, email, or class...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                searchController.clear();
+                                setModalState(() {
+                                  filteredStudents = List.from(_students);
+                                });
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: _isLoadingStudents
-                          ? const Center(child: CircularProgressIndicator())
-                          : _students.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    'No students found',
-                                    style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
-                                  ),
-                                )
-                              : ListView.builder(
-                                  itemCount: _students.length,
-                                  itemBuilder: (context, index) {
-                                    final student = _students[index];
-                                    return _buildStudentOption(student['name'] ?? 'Unknown');
-                                  },
-                                ),
-                    ),
-                  ],
+                    onChanged: (query) {
+                      setModalState(() {
+                        if (query.isEmpty) {
+                          filteredStudents = List.from(_students);
+                        } else {
+                          filteredStudents = _students.where((student) {
+                            final name = student['name']?.toString().toLowerCase() ?? '';
+                            final email = student['email']?.toString().toLowerCase() ?? '';
+                            final studentClass = student['studentClass']?.toString().toLowerCase() ?? '';
+                            final searchLower = query.toLowerCase();
+                            return name.contains(searchLower) || 
+                                   email.contains(searchLower) || 
+                                   studentClass.contains(searchLower);
+                          }).toList();
+                        }
+                      });
+                    },
+                  ),
                 ),
-              ),
+                
+                const SizedBox(height: 16),
+                
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Registered Students (${filteredStudents.length})',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showStudentNotFoundDialog();
+                              },
+                              child: const Text('Student not found?'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: _isLoadingStudents
+                              ? const Center(child: CircularProgressIndicator())
+                              : filteredStudents.isEmpty
+                                  ? _buildEmptySearchState(searchController.text.isNotEmpty)
+                                  : ListView.builder(
+                                      itemCount: filteredStudents.length,
+                                      itemBuilder: (context, index) {
+                                        final student = filteredStudents[index];
+                                        return _buildStudentOption(student);
+                                      },
+                                    ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildStudentOption(String studentName) {
+  Widget _buildStudentOption(Map<String, dynamic> student) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final studentName = student['name'] ?? 'Unknown';
+    final studentEmail = student['email'] ?? '';
+    final studentClass = student['studentClass'] ?? 'No class';
     
     return InkWell(
       onTap: () {
@@ -184,7 +246,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
               child: Center(
                 child: Text(
-                  studentName.substring(0, 1),
+                  studentName.isNotEmpty ? studentName.substring(0, 1).toUpperCase() : 'S',
                   style: TextStyle(
                     color: Colors.blue.shade600,
                     fontWeight: FontWeight.w600,
@@ -195,13 +257,33 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                studentName,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    studentName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  if (studentEmail.isNotEmpty)
+                    Text(
+                      studentEmail,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                      ),
+                    ),
+                  Text(
+                    'Class: $studentClass',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
             ),
             Icon(
@@ -211,6 +293,87 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  Widget _buildEmptySearchState(bool isSearching) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isSearching ? Icons.search_off : Icons.school_outlined,
+            size: 64,
+            color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isSearching ? 'No students found' : 'No students registered yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isSearching 
+                ? 'Try adjusting your search terms'
+                : 'Students will appear here once they register',
+            style: TextStyle(
+              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showStudentNotFoundDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.help_outline, color: Colors.orange),
+            SizedBox(width: 12),
+            Text('Student Not Found?'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('If you can\'t find your student, they may need to:'),
+            SizedBox(height: 12),
+            Text('• Register their account first'),
+            Text('• Use the exact same name spelling'),
+            Text('• Contact their teacher for assistance'),
+            SizedBox(height: 16),
+            Text(
+              'You can still create your parent account and connect to your student later.',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _childNameController.text = 'Student Name (To be verified)';
+            },
+            child: const Text('Continue Anyway'),
+          ),
+        ],
       ),
     );
   }

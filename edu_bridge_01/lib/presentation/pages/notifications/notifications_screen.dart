@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
+import '../../../data/repositories/auth_repository.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -12,6 +16,37 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final String? _userId = FirebaseAuth.instance.currentUser?.uid;
+  String? _childName;
+  String? _studentId;
+  bool _isLoadingChildData = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadChildDataIfParent();
+  }
+  
+  Future<void> _loadChildDataIfParent() async {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated && authState.userType == 'Parent') {
+      setState(() => _isLoadingChildData = true);
+      try {
+        final authRepository = RepositoryProvider.of<AuthRepository>(context);
+        final userData = await authRepository.getUserData(authState.userId);
+        if (userData != null && userData['childName'] != null) {
+          _childName = userData['childName'];
+          final studentData = await authRepository.findStudentByName(_childName!);
+          if (studentData != null) {
+            _studentId = studentData['uid'];
+          }
+        }
+      } catch (e) {
+        // Handle error silently
+      } finally {
+        setState(() => _isLoadingChildData = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +68,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: _userId == null
           ? const Center(child: Text('Please log in to view notifications'))
-          : StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('notifications')
-                  .where('userId', isEqualTo: _userId)
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
+          : BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                if (_isLoadingChildData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                // Determine which user ID to use for notifications
+                String targetUserId = _userId!;
+                if (authState is AuthAuthenticated && authState.userType == 'Parent' && _studentId != null) {
+                  targetUserId = _studentId!;
+                }
+                
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('notifications')
+                      .where('userId', isEqualTo: targetUserId)
+                      .orderBy('createdAt', descending: true)
+                      .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -56,17 +103,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   return _buildEmptyState();
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: notifications.length,
-                  itemBuilder: (context, index) {
-                    final notification = notifications[index].data() as Map<String, dynamic>;
-                    return _buildNotificationCard(
-                      notification: notification,
-                      notificationId: notifications[index].id,
-                    );
-                  },
-                );
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: notifications.length,
+                    itemBuilder: (context, index) {
+                      final notification = notifications[index].data() as Map<String, dynamic>;
+                      return _buildNotificationCard(
+                        notification: notification,
+                        notificationId: notifications[index].id,
+                        isParentView: authState is AuthAuthenticated && authState.userType == 'Parent',
+                      );
+                    },
+                  );
+                },
+              );
               },
             ),
     );
@@ -116,6 +166,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget _buildNotificationCard({
     required Map<String, dynamic> notification,
     required String notificationId,
+    bool isParentView = false,
   }) {
     final isRead = notification['isRead'] ?? false;
     final type = notification['type'] ?? '';
@@ -182,7 +233,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            title,
+                            isParentView && _childName != null ? '$_childName: $title' : title,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: isRead ? FontWeight.w500 : FontWeight.w600,

@@ -66,18 +66,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           emit(AuthError('SHOW_PASSWORD_DIALOG:$errorMessage'));
           return;
         case 'invalid-credential':
-          // Check if user exists to determine if it's wrong password or no account
+          // Check if user exists by trying to fetch sign-in methods
           try {
-            // Check if user exists - simplified approach
-            await _authRepository.getUserDataByEmail(event.email);
-            // If we get here, user exists, so it's wrong password
-            errorMessage =
-                '🔐 Oops! Wrong password. Double-check and try again.';
-            emit(AuthError('SHOW_PASSWORD_DIALOG:$errorMessage'));
+            final signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(event.email);
+            if (signInMethods.isNotEmpty) {
+              // User exists, so it's wrong password
+              errorMessage = '🔐 Oops! Wrong password. Double-check and try again.';
+              emit(AuthError('SHOW_PASSWORD_DIALOG:$errorMessage'));
+            } else {
+              // No account with this email
+              errorMessage = '❌ No account found with this email. You need to register first!';
+              emit(AuthError('SHOW_REGISTER_DIALOG:$errorMessage'));
+            }
           } catch (fetchError) {
-            // User doesn't exist
-            errorMessage =
-                '❌ No account found with this email. You need to register first!';
+            // If fetchSignInMethodsForEmail fails, assume no account exists
+            errorMessage = '❌ No account found with this email. You need to register first!';
             emit(AuthError('SHOW_REGISTER_DIALOG:$errorMessage'));
           }
           return;

@@ -39,22 +39,22 @@ class _SignUpPageState extends State<SignUpPage> {
     try {
       final authRepository = RepositoryProvider.of<AuthRepository>(context);
       final students = await authRepository.getAllRegisteredStudents();
-// print('Loaded ${students.length} students: ${students.map((s) => s['name']).toList()}');
-      print('Loaded ${students.length} students: ${students.map((s) => s['name']).toList()}');
+      print('Loaded ${students.length} students');
       if (!mounted) return;
-      setState(() => _students = students);
+      setState(() {
+        _students = students;
+        _isLoadingStudents = false;
+      });
     } catch (e) {
-// print('Error loading students: $e');
-    } finally {
+      print('Error loading students: $e');
       if (!mounted) return;
       setState(() => _isLoadingStudents = false);
     }
   }
 
-  void _showStudentSearchDialog() async {
+  void _showStudentSearchDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final searchController = TextEditingController();
-    List<Map<String, dynamic>> filteredStudents = List.from(_students);
     
     showModalBottomSheet(
       context: context,
@@ -63,18 +63,7 @@ class _SignUpPageState extends State<SignUpPage> {
       useSafeArea: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          // Load students if not already loaded
-          if (_students.isEmpty && !_isLoadingStudents) {
-            _loadStudents().then((_) {
-              if (mounted) {
-                setModalState(() {
-                  filteredStudents = List.from(_students);
-                });
-              }
-            });
-          } else if (filteredStudents.isEmpty) {
-            filteredStudents = List.from(_students);
-          }
+          final authRepository = RepositoryProvider.of<AuthRepository>(context);
           
           return Container(
             constraints: BoxConstraints(
@@ -186,13 +175,21 @@ class _SignUpPageState extends State<SignUpPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                'Students (${_isLoadingStudents ? '...' : filteredStudents.length})',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
-                                ),
+                              child: StreamBuilder<List<Map<String, dynamic>>>(
+                                stream: authRepository.getStudentsStream(),
+                                builder: (context, snapshot) {
+                                  final studentCount = snapshot.data?.length ?? 0;
+                                  final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                                  
+                                  return Text(
+                                    'Students (${isLoading ? 'Loading...' : '$studentCount available'})',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             TextButton(
@@ -209,25 +206,61 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         const SizedBox(height: 8),
                         Flexible(
-                          child: _isLoadingStudents
-                              ? const Center(
+                          child: StreamBuilder<List<Map<String, dynamic>>>(
+                            stream: authRepository.getStudentsStream(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(
                                   child: Padding(
                                     padding: EdgeInsets.all(20),
                                     child: CircularProgressIndicator(),
                                   ),
-                                )
-                              : _students.isEmpty
-                                  ? _buildEmptySearchState(false)
-                                  : filteredStudents.isEmpty && searchController.text.isNotEmpty
-                                      ? _buildEmptySearchState(true)
-                                      : ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: filteredStudents.length,
-                                          itemBuilder: (context, index) {
-                                            final student = filteredStudents[index];
-                                            return _buildStudentOption(student);
-                                          },
-                                        ),
+                                );
+                              }
+                              
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Text(
+                                      'Error loading students: ${snapshot.error}',
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                );
+                              }
+                              
+                              final allStudents = snapshot.data ?? [];
+                              final filteredStudents = searchController.text.isEmpty
+                                  ? allStudents
+                                  : allStudents.where((student) {
+                                      final name = student['name']?.toString().toLowerCase() ?? '';
+                                      final email = student['email']?.toString().toLowerCase() ?? '';
+                                      final studentClass = student['studentClass']?.toString().toLowerCase() ?? '';
+                                      final searchLower = searchController.text.toLowerCase();
+                                      return name.contains(searchLower) || 
+                                             email.contains(searchLower) || 
+                                             studentClass.contains(searchLower);
+                                    }).toList();
+                              
+                              if (allStudents.isEmpty) {
+                                return _buildEmptySearchState(false);
+                              }
+                              
+                              if (filteredStudents.isEmpty && searchController.text.isNotEmpty) {
+                                return _buildEmptySearchState(true);
+                              }
+                              
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: filteredStudents.length,
+                                itemBuilder: (context, index) {
+                                  final student = filteredStudents[index];
+                                  return _buildStudentOption(student);
+                                },
+                              );
+                            },
+                          ),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -416,10 +449,8 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   void initState() {
     super.initState();
-    // Load students immediately when screen opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadStudents();
-    });
+    // Load students immediately
+    _loadStudents();
   }
 
   @override

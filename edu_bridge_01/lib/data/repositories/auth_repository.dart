@@ -196,6 +196,15 @@ class AuthRepository {
     }
   }
   
+  Stream<List<Map<String, dynamic>>> getStudentsStream() {
+    return _firestore.collection('students').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => {
+        'id': doc.id,
+        ...doc.data(),
+      }).toList();
+    });
+  }
+  
   Future<List<Map<String, dynamic>>> searchStudents(String searchQuery) async {
     try {
       final allStudents = await getAllRegisteredStudents();

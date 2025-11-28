@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/utils/file_upload_helper.dart';
 import '../../../data/models/assignment_model.dart';
+import '../../../data/services/notification_service.dart';
 
 class CreateAssignmentScreen extends StatefulWidget {
   const CreateAssignmentScreen({super.key});
@@ -694,6 +695,15 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         
         // Send notifications to students and parents
         await _sendAssignmentNotifications(assignmentRef.id, assignedStudentNames);
+        
+        // Send parent notifications using notification service
+        for (String studentId in _selectedStudents) {
+          await NotificationService.sendAssignmentNotificationToParent(
+            studentId: studentId,
+            assignmentTitle: _titleController.text,
+            type: 'assignment_created',
+          );
+        }
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -6,6 +6,7 @@ import 'package:open_filex/open_filex.dart';
 import 'dart:io';
 import 'dart:convert';
 import '../../../core/constants/app_constants.dart';
+import '../../../data/services/notification_service.dart';
 
 class TeacherGradingScreen extends StatefulWidget {
   final Map<String, dynamic> assignment;
@@ -416,6 +417,12 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
 
       // Send notifications to student and parent
       await _sendGradingNotifications(submission, grade);
+      await NotificationService.sendAssignmentNotificationToParent(
+        studentId: submission['studentId'],
+        assignmentTitle: widget.assignment['title'] ?? 'Assignment',
+        type: 'assignment_graded',
+        grade: grade.toStringAsFixed(1),
+      );
 
       // Reload submissions
       await _loadSubmissions();

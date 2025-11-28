@@ -612,7 +612,7 @@ class _LoginPageState extends State<LoginPage> {
                                       },
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
+                                    horizontal: 8,
                                     vertical: 12,
                                   ),
                                   side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.black26),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../../data/repositories/auth_repository.dart';
+import 'student_search_screen.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -62,6 +63,57 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   void _loadStudentAssignments() async {
     // This will be implemented to fetch assignments for the specific student
   }
+  
+  Future<void> _searchForStudent() async {
+    final selectedStudent = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const StudentSearchScreen(),
+      ),
+    );
+    
+    if (selectedStudent != null) {
+      // Update parent's child information
+      try {
+        final authBloc = context.read<AuthBloc>();
+        final authState = authBloc.state;
+        
+        if (authState is AuthAuthenticated) {
+          final authRepository = RepositoryProvider.of<AuthRepository>(context);
+          
+          // Update parent's record with selected child
+          await authRepository.saveUserData(
+            uid: authState.userId,
+            email: authState.email,
+            name: authState.name,
+            userType: authState.userType,
+            additionalData: {
+              'childName': selectedStudent['name'],
+              'childId': selectedStudent['id'],
+              'childClass': selectedStudent['studentClass'],
+            },
+          );
+          
+          // Reload student info
+          _loadStudentInfo();
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Connected to ${selectedStudent['name']}'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error connecting to student: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +127,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            onPressed: _searchForStudent,
+            tooltip: 'Search for your child',
+          ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {},

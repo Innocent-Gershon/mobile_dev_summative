@@ -149,10 +149,9 @@ class AuthRepository {
     final cleanName = studentName.trim();
     
     try {
-      // First try exact match
+      // First try exact match in students collection
       var query = await _firestore
-          .collection('users')
-          .where('userType', isEqualTo: 'Student')
+          .collection('students')
           .where('name', isEqualTo: cleanName)
           .limit(1)
           .get();
@@ -161,10 +160,9 @@ class AuthRepository {
         return query.docs.first.data();
       }
       
-      // Try case-insensitive search by getting all students and filtering
+      // Try case-insensitive search
       final allStudents = await _firestore
-          .collection('users')
-          .where('userType', isEqualTo: 'Student')
+          .collection('students')
           .get();
       
       for (var doc in allStudents.docs) {
@@ -188,9 +186,28 @@ class AuthRepository {
   
   Future<List<Map<String, dynamic>>> getAllRegisteredStudents() async {
     try {
-      // Use dedicated students collection for better performance
       final query = await _firestore.collection('students').get();
-      return query.docs.map((doc) => doc.data()).toList();
+      return query.docs.map((doc) => {
+        'id': doc.id,
+        ...doc.data(),
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+  
+  Future<List<Map<String, dynamic>>> searchStudents(String searchQuery) async {
+    try {
+      final allStudents = await getAllRegisteredStudents();
+      if (searchQuery.isEmpty) return allStudents;
+      
+      final query = searchQuery.toLowerCase();
+      return allStudents.where((student) {
+        final name = student['name']?.toString().toLowerCase() ?? '';
+        final email = student['email']?.toString().toLowerCase() ?? '';
+        final studentClass = student['studentClass']?.toString().toLowerCase() ?? '';
+        return name.contains(query) || email.contains(query) || studentClass.contains(query);
+      }).toList();
     } catch (e) {
       return [];
     }

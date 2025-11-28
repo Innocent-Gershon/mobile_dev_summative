@@ -287,6 +287,23 @@ class _ClassesViewState extends State<ClassesView> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
+                // Check if user is parent and restrict access
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated && authState.userType == 'Parent') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Parents can view assignments but cannot access detailed class management'),
+                      backgroundColor: Colors.orange,
+                      action: SnackBarAction(
+                        label: 'OK',
+                        textColor: Colors.white,
+                        onPressed: () {},
+                      ),
+                    ),
+                  );
+                  return;
+                }
+                
                 Navigator.push(
                   context,
                   MaterialPageRoute(

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/file_upload_helper.dart';
 import '../../../data/models/assignment_model.dart';
+import '../../../data/services/notification_service.dart';
 
 class StudentAssignmentView extends StatefulWidget {
   final Map<String, dynamic> assignment;
@@ -693,6 +694,11 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
       });
 
       await _sendSubmissionNotification();
+      await NotificationService.sendAssignmentNotificationToParent(
+        studentId: widget.studentId,
+        assignmentTitle: widget.assignment['title'] ?? 'Assignment',
+        type: 'assignment_submitted',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

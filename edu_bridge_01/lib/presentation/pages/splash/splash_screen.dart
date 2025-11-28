@@ -34,7 +34,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: BlocListener<SplashBloc, SplashState>(
         listener: (context, state) {
           if (state is SplashPageChanged) {
@@ -114,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   decoration: BoxDecoration(
                     color: currentPage == index 
                         ? AppColors.primary 
-                        : AppColors.border,
+                        : Theme.of(context).colorScheme.outline,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -162,7 +161,7 @@ class _SplashPage1 extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white,
+                    Theme.of(context).colorScheme.surface,
                     AppColors.primary.withValues(alpha: 0.1),
                   ],
                 ),
@@ -209,9 +208,8 @@ class _SplashPage1 extends StatelessWidget {
             delay: const Duration(milliseconds: 400),
             child: Text(
               AppStrings.tagline,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 18,
-                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -243,7 +241,7 @@ class _SplashPage2 extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white,
+                    Theme.of(context).colorScheme.surface,
                     AppColors.secondary.withValues(alpha: 0.1),
                   ],
                 ),
@@ -287,9 +285,7 @@ class _SplashPage2 extends StatelessWidget {
             delay: const Duration(milliseconds: 400),
             child: Text(
               AppStrings.splash2Subtitle,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
           ),
@@ -320,8 +316,8 @@ class _SplashPage3 extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withValues(alpha: 0.9),
-                    Colors.white.withValues(alpha: 0.7),
+                    Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                    Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
                   ],
                 ),
                 boxShadow: [
@@ -364,9 +360,7 @@ class _SplashPage3 extends StatelessWidget {
             delay: const Duration(milliseconds: 400),
             child: Text(
               AppStrings.splash3Subtitle,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
           ),

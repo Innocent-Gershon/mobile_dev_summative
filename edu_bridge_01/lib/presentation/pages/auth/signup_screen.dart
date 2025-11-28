@@ -51,13 +51,10 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  void _showStudentSearchDialog() {
-    // Always load fresh data when opening search
-    _loadStudents();
-    
+  void _showStudentSearchDialog() async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final searchController = TextEditingController();
-    List<Map<String, dynamic>> filteredStudents = [];
+    List<Map<String, dynamic>> filteredStudents = List.from(_students);
     
     showModalBottomSheet(
       context: context,
@@ -66,8 +63,16 @@ class _SignUpPageState extends State<SignUpPage> {
       useSafeArea: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          // Update filtered students when _students changes
-          if (filteredStudents.isEmpty && _students.isNotEmpty) {
+          // Load students if not already loaded
+          if (_students.isEmpty && !_isLoadingStudents) {
+            _loadStudents().then((_) {
+              if (mounted) {
+                setModalState(() {
+                  filteredStudents = List.from(_students);
+                });
+              }
+            });
+          } else if (filteredStudents.isEmpty) {
             filteredStudents = List.from(_students);
           }
           
@@ -211,16 +216,18 @@ class _SignUpPageState extends State<SignUpPage> {
                                     child: CircularProgressIndicator(),
                                   ),
                                 )
-                              : filteredStudents.isEmpty
-                                  ? _buildEmptySearchState(searchController.text.isNotEmpty)
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      itemCount: filteredStudents.length,
-                                      itemBuilder: (context, index) {
-                                        final student = filteredStudents[index];
-                                        return _buildStudentOption(student);
-                                      },
-                                    ),
+                              : _students.isEmpty
+                                  ? _buildEmptySearchState(false)
+                                  : filteredStudents.isEmpty && searchController.text.isNotEmpty
+                                      ? _buildEmptySearchState(true)
+                                      : ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: filteredStudents.length,
+                                          itemBuilder: (context, index) {
+                                            final student = filteredStudents[index];
+                                            return _buildStudentOption(student);
+                                          },
+                                        ),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -409,7 +416,10 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   void initState() {
     super.initState();
-    _loadStudents();
+    // Load students immediately when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStudents();
+    });
   }
 
   @override

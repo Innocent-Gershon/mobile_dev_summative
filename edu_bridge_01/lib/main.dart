@@ -17,6 +17,7 @@ import 'presentation/pages/splash/splash_screen.dart';
 import 'presentation/pages/main_navigation.dart';
 import 'presentation/pages/auth/login_screen.dart';
 import 'presentation/pages/auth/email_verification_screen.dart';
+import 'presentation/pages/notifications/notifications_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +79,7 @@ class EduBridgeApp extends StatelessWidget {
                   '/login': (context) => const LoginPage(),
                   '/email-verification': (context) =>
                       const EmailVerificationScreen(email: ''),
+                  '/notifications': (context) => const NotificationsScreen(),
                 },
               );
             },

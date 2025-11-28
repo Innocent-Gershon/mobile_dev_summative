@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 
@@ -101,15 +102,19 @@ class _HomeScreenContent extends StatefulWidget {
 
 class _HomeScreenContentState extends State<_HomeScreenContent> {
 
-  int _taskTabIndex = 0; // 0 for Active, 1 for Completed
+  int _taskTabIndex = 0; // 0 for Active/Pending, 1 for Completed/Graded
   String? _studentName;
   bool _isLoadingStudentData = false;
+  List<Map<String, dynamic>> _teacherAssignments = [];
+  bool _isLoadingAssignments = false;
   
   @override
   void initState() {
     super.initState();
     if (widget.userType == UserType.parent) {
       _loadStudentData();
+    } else if (widget.userType == UserType.teacher) {
+      _loadTeacherAssignments();
     }
   }
   
@@ -129,6 +134,51 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
   }
   
+  Future<void> _loadTeacherAssignments() async {
+    setState(() => _isLoadingAssignments = true);
+    try {
+      final assignmentsQuery = await FirebaseFirestore.instance
+          .collection('assignments')
+          .where('teacherId', isEqualTo: widget.userId)
+          .get();
+      
+      List<Map<String, dynamic>> assignments = [];
+      
+      for (var doc in assignmentsQuery.docs) {
+        final assignmentData = doc.data();
+        
+        // Get submission count and graded count
+        final submissionsQuery = await FirebaseFirestore.instance
+            .collection('submissions')
+            .where('assignmentId', isEqualTo: doc.id)
+            .get();
+        
+        int totalSubmissions = submissionsQuery.docs.length;
+        int gradedSubmissions = submissionsQuery.docs
+            .where((sub) => sub.data()['status'] == 'graded')
+            .length;
+        
+        assignments.add({
+          'id': doc.id,
+          'title': assignmentData['title'] ?? 'Assignment',
+          'subject': assignmentData['subject'] ?? 'General',
+          'dueDate': assignmentData['dueDate'],
+          'totalStudents': (assignmentData['assignedStudents'] as List?)?.length ?? 0,
+          'totalSubmissions': totalSubmissions,
+          'gradedSubmissions': gradedSubmissions,
+          'isCompleted': gradedSubmissions == totalSubmissions && totalSubmissions > 0,
+        });
+      }
+      
+      setState(() {
+        _teacherAssignments = assignments;
+        _isLoadingAssignments = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingAssignments = false);
+    }
+  }
+
   final List<Task> _tasks = [
     Task(
       id: '1',
@@ -288,52 +338,58 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           ),
           
           // Search Icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[800] : const Color(0xFFEBF0FF),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.search_rounded,
-              color: isDarkMode ? Colors.white : const Color(0xFF3366FF),
-              size: 24,
+          GestureDetector(
+            onTap: () => _showSearchDialog(),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[800] : const Color(0xFFEBF0FF),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.search_rounded,
+                color: isDarkMode ? Colors.white : const Color(0xFF3366FF),
+                size: 24,
+              ),
             ),
           ),
           const SizedBox(width: 12),
           
           // Notification Icon with Badge
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[800] : const Color(0xFFEBF0FF),
-              shape: BoxShape.circle,
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    Icons.notifications_rounded,
-                    color: isDarkMode ? Colors.white : const Color(0xFF3366FF),
-                    size: 24,
-                  ),
-                ),
-                Positioned(
-                  right: 10,
-                  top: 10,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF3B30),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFEBF0FF), width: 1.5),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/notifications'),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[800] : const Color(0xFFEBF0FF),
+                shape: BoxShape.circle,
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Icon(
+                      Icons.notifications_rounded,
+                      color: isDarkMode ? Colors.white : const Color(0xFF3366FF),
+                      size: 24,
                     ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    right: 10,
+                    top: 10,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF3B30),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFEBF0FF), width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -565,7 +621,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           Text(
             widget.userType == UserType.parent && _studentName != null 
                 ? '$_studentName\'s Tasks' 
-                : 'My Task',
+                : widget.userType == UserType.teacher
+                    ? 'Tasks'
+                    : 'My Task',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
@@ -602,7 +660,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'Active',
+                        widget.userType == UserType.teacher ? 'Pending' : 'Active',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -629,7 +687,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'Completed',
+                        widget.userType == UserType.teacher ? 'Graded' : 'Completed',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -645,13 +703,52 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           const SizedBox(height: 20),
           
           // Task Content
-          if (_taskTabIndex == 0) ..._buildActiveTasks(activeTasks)
+          if (widget.userType == UserType.teacher)
+            ..._buildTeacherTasks()
+          else if (_taskTabIndex == 0) ..._buildActiveTasks(activeTasks)
           else ..._buildCompletedTasks(completedTasks),
         ],
       ),
     );
   }
   
+  List<Widget> _buildTeacherTasks() {
+    if (_isLoadingAssignments) {
+      return [
+        Container(
+          height: 120,
+          alignment: Alignment.center,
+          child: const CircularProgressIndicator(),
+        ),
+      ];
+    }
+    
+    final filteredAssignments = _taskTabIndex == 0
+        ? _teacherAssignments.where((a) => !a['isCompleted']).toList()
+        : _teacherAssignments.where((a) => a['isCompleted']).toList();
+    
+    if (filteredAssignments.isEmpty) {
+      return [
+        Container(
+          height: 120,
+          alignment: Alignment.center,
+          child: Text(
+            _taskTabIndex == 0 ? 'No pending assignments' : 'No graded assignments',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF8E8E93),
+            ),
+          ),
+        ),
+      ];
+    }
+    
+    return filteredAssignments.map((assignment) => Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: _buildTeacherAssignmentCard(assignment),
+    )).toList();
+  }
+
   List<Widget> _buildActiveTasks(List<Task> activeTasks) {
     if (activeTasks.isEmpty) {
       return [
@@ -860,6 +957,178 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     });
   }
 
+  Widget _buildTeacherAssignmentCard(Map<String, dynamic> assignment) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isCompleted = assignment['isCompleted'] as bool;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isCompleted 
+            ? (isDarkMode ? Colors.grey[900] : const Color(0xFFF8F9FA))
+            : (isDarkMode ? Colors.grey[850] : Colors.white),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCompleted 
+              ? (isDarkMode ? Colors.grey[700]! : const Color(0xFFE0E0E0))
+              : (isDarkMode ? Colors.grey[700]! : const Color(0xFFE8E8E8)), 
+          width: 1
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  assignment['title'],
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isCompleted 
+                        ? const Color(0xFF8E8E93) 
+                        : (isDarkMode ? Colors.white : const Color(0xFF1A1A1A)),
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: assignment['subject'] == 'Mathematics' 
+                      ? const Color(0xFF3B82F6) 
+                      : const Color(0xFF10B981),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  assignment['subject'],
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          
+          Text(
+            'Assigned to ${assignment['totalStudents']} students',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF8E8E93),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${assignment['totalSubmissions']} submitted',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${assignment['gradedSubmissions']} graded',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          Container(
+            height: 1,
+            color: const Color(0xFFF5F5F5),
+          ),
+          const SizedBox(height: 12),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isCompleted ? Icons.check_circle_rounded : Icons.pending_rounded,
+                    size: 16,
+                    color: isCompleted ? const Color(0xFF34C759) : const Color(0xFFFFCC00),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isCompleted ? 'All Graded' : 'Pending Grading',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: isCompleted ? const Color(0xFF34C759) : const Color(0xFFFFCC00),
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                'Due: ${_formatAssignmentDate(assignment['dueDate'])}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatAssignmentDate(dynamic date) {
+    try {
+      DateTime dateTime;
+      if (date is Timestamp) {
+        dateTime = date.toDate();
+      } else if (date is String) {
+        dateTime = DateTime.parse(date);
+      } else {
+        return 'No date';
+      }
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
   Widget _buildTag(String text, bool isCompleted) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -897,6 +1166,36 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
 
   
+  void _showSearchDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Search'),
+        content: const TextField(
+          decoration: InputDecoration(
+            hintText: 'Search assignments, tasks, or content...',
+            prefixIcon: Icon(Icons.search),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Search functionality coming soon!')),
+              );
+            },
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAllCategoriesBottomSheet() {
     showModalBottomSheet(
       context: context,

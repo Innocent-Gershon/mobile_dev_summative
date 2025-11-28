@@ -6,7 +6,9 @@ import '../../../data/models/assignment_model.dart';
 import '../../../data/services/notification_service.dart';
 
 class CreateAssignmentScreen extends StatefulWidget {
-  const CreateAssignmentScreen({super.key});
+  final String? preselectedSubject;
+  
+  const CreateAssignmentScreen({super.key, this.preselectedSubject});
 
   @override
   State<CreateAssignmentScreen> createState() => _CreateAssignmentScreenState();
@@ -43,6 +45,9 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.preselectedSubject != null) {
+      _subjectController.text = widget.preselectedSubject!;
+    }
     _loadStudents();
   }
 
@@ -192,8 +197,8 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           
           const SizedBox(height: 16),
           
-          TextFormField(
-            controller: _subjectController,
+          DropdownButtonFormField<String>(
+            value: _subjectController.text.isEmpty ? null : _subjectController.text,
             decoration: InputDecoration(
               labelText: 'Subject',
               prefixIcon: const Icon(Icons.book),
@@ -201,6 +206,15 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
+            items: const [
+              DropdownMenuItem(value: 'Mathematics', child: Text('Mathematics')),
+              DropdownMenuItem(value: 'General Knowledge', child: Text('General Knowledge')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                _subjectController.text = value;
+              }
+            },
             validator: (value) => value?.isEmpty == true ? 'Subject is required' : null,
           ),
           

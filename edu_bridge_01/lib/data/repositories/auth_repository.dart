@@ -18,7 +18,10 @@ class AuthRepository {
         clientId: '605131029565-bg342octcpp0e8vip5aejkk1vvfidjb6.apps.googleusercontent.com',
       );
     } else {
-      _googleSignIn = GoogleSignIn();
+      // Android configuration
+      _googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
     }
   }
 
@@ -58,83 +61,29 @@ class AuthRepository {
 
   Future<UserCredential?> signInWithGoogle() async {
     if (kIsWeb) {
-      try {
-        // Try popup first
-        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        googleProvider.addScope('email');
-        googleProvider.addScope('profile');
-        
-        return await _firebaseAuth.signInWithPopup(googleProvider);
-      } catch (e) {
-        // Fallback to redirect if popup fails
-        try {
-          final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-          googleProvider.addScope('email');
-          googleProvider.addScope('profile');
-          
-          await _firebaseAuth.signInWithRedirect(googleProvider);
-          return await _firebaseAuth.getRedirectResult();
-        } catch (redirectError) {
-          // Fallback for web when Google Sign-In fails
-          return await _createTestAccount();
-        }
-      }
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      googleProvider.addScope('email');
+      googleProvider.addScope('profile');
+      
+      return await _firebaseAuth.signInWithPopup(googleProvider);
     } else {
       // Mobile Google Sign-In
-      try {
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        
-        if (googleUser == null) return null;
-        
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        
-        if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-          throw Exception('Failed to get Google authentication tokens');
-        }
-        
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        
-        return await _firebaseAuth.signInWithCredential(credential);
-      } catch (e) {
-        // Fallback for iOS when Google Sign-In is not available
-        if (Platform.isIOS) {
-          return await _createTestAccount();
-        }
-        rethrow;
-      }
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) return null;
+      
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      
+      return await _firebaseAuth.signInWithCredential(credential);
     }
   }
 
-  Future<UserCredential> _createTestAccount() async {
-    const testEmail = 'testuser@gmail.com';
-    const testPassword = 'Test123!';
-    
-    try {
-      return await _firebaseAuth.signInWithEmailAndPassword(
-        email: testEmail,
-        password: testPassword,
-      );
-    } catch (e) {
-      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: testEmail,
-        password: testPassword,
-      );
-      
-      await userCredential.user?.updateDisplayName('Test User');
-      
-      await saveUserData(
-        uid: userCredential.user!.uid,
-        email: testEmail,
-        name: 'Test User',
-        userType: 'Student',
-      );
-      
-      return userCredential;
-    }
-  }
+
 
 
 

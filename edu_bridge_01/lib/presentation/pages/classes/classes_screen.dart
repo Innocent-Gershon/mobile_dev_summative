@@ -11,6 +11,7 @@ import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../assignments/create_assignment_screen.dart';
 import '../assignments/assignment_details_sheet.dart';
+import 'subject_assignments_screen.dart';
 
 class ClassesScreen extends StatelessWidget {
   final String? parentChildName;
@@ -186,39 +187,139 @@ class _ClassesViewState extends State<ClassesView> {
               ),
             ),
           Expanded(
-            child: BlocBuilder<ClassesBloc, ClassesState>(
-              builder: (context, state) {
-                if (state is ClassesLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is ClassesLoaded) {
-                  final filteredClasses = _searchQuery.isEmpty
-                      ? state.classes
-                      : state.classes.where((cls) => 
-                          cls.name.toLowerCase().contains(_searchQuery.toLowerCase())
-                        ).toList();
-                  
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      context.read<ClassesBloc>().add(RefreshClasses());
-                    },
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: filteredClasses.length,
-                      itemBuilder: (context, index) {
-                        return ClassCard(classModel: filteredClasses[index]);
-                      },
+            child: _buildSubjectCards(context, isDark),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubjectCards(BuildContext context, bool isDark) {
+    final subjects = [
+      {
+        'name': 'Mathematics',
+        'icon': '📊',
+        'color': const Color(0xFF3B82F6),
+        'description': 'Numbers, equations, and problem solving'
+      },
+      {
+        'name': 'General Knowledge',
+        'icon': '🌍',
+        'color': const Color(0xFF10B981),
+        'description': 'Science, history, and world facts'
+      },
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: subjects.length,
+      itemBuilder: (context, index) {
+        final subject = subjects[index];
+        return _buildSubjectCard(context, subject, isDark);
+      },
+    );
+  }
+
+  Widget _buildSubjectCard(BuildContext context, Map<String, dynamic> subject, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: subject['color'],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.15), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    subject['icon'],
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subject['name'],
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  );
-                } else if (state is ClassesError) {
-                  return Center(
-                    child: Text(
-                      'Error: ${state.message}',
-                      style: const TextStyle(color: Colors.red),
+                    const SizedBox(height: 2),
+                    Text(
+                      subject['description'],
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  );
-                }
-                return const SizedBox();
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubjectAssignmentsScreen(
+                      subject: subject['name'],
+                      parentChildName: widget.parentChildName,
+                    ),
+                  ),
+                );
               },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'View Assignments',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward,
+                    size: 17,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

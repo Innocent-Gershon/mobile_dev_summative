@@ -742,7 +742,9 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                       ),
                     ),
                   ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),

@@ -26,19 +26,19 @@ class StudentAssignmentView extends StatefulWidget {
 }
 
 class _StudentAssignmentViewState extends State<StudentAssignmentView> {
-  List<AttachmentModel> _submissionAttachments = [];
-  Map<String, double> _uploadProgress = {};
+  final List<AttachmentModel> _submissionAttachments = [];
+  final Map<String, double> _uploadProgress = {};
   bool _isUploading = false;
   Map<String, dynamic>? _submission;
 
   @override
   void initState() {
     super.initState();
-    print('📚 StudentAssignmentView initState');
-    print('Assignment data: ${widget.assignment}');
-    print('Attachments: ${widget.assignment['attachments']}');
-    print('Attachments type: ${widget.assignment['attachments'].runtimeType}');
-    print('Has PDF: ${widget.assignment['assignmentPdfBase64'] != null}');
+    debugPrint('📚 StudentAssignmentView initState');
+    debugPrint('Assignment data: ${widget.assignment}');
+    debugPrint('Attachments: ${widget.assignment['attachments']}');
+    debugPrint('Attachments type: ${widget.assignment['attachments'].runtimeType}');
+    debugPrint('Has PDF: ${widget.assignment['assignmentPdfBase64'] != null}');
     _loadSubmission();
   }
 
@@ -56,7 +56,7 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
         });
       }
     } catch (e) {
-// print('Error loading submission: $e');
+// debugPrint('Error loading submission: $e');
     }
   }
 
@@ -162,9 +162,9 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     widget.assignment['contentType'] ?? '',
@@ -299,7 +299,7 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.05),
+                    color: Colors.blue.withValues(alpha: 0.05),
                     border: Border.all(color: Colors.blue.shade200),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -849,7 +849,7 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -872,7 +872,7 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -893,10 +893,10 @@ class _StudentAssignmentViewState extends State<StudentAssignmentView> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: FileUploadHelper.getFileColor(attachment.extension).withOpacity(0.1),
+                color: FileUploadHelper.getFileColor(attachment.extension).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: FileUploadHelper.getFileColor(attachment.extension).withOpacity(0.3),
+                  color: FileUploadHelper.getFileColor(attachment.extension).withValues(alpha: 0.3),
                 ),
               ),
               child: Row(

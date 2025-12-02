@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -548,7 +548,7 @@ class FileUploadHelper {
         return base64Decode(base64String);
       }
     } catch (e) {
-      print('Error downloading from Firestore: $e');
+      debugPrint('Error downloading from Firestore: $e');
       return null;
     }
   }
@@ -559,7 +559,7 @@ class FileUploadHelper {
       await FirebaseStorage.instance.ref(filePath).delete();
       return true;
     } catch (e) {
-      print('Error deleting file: $e');
+      debugPrint('Error deleting file: $e');
       return false;
     }
   }

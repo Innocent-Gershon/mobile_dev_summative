@@ -29,17 +29,17 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
 
   Future<void> _loadSubmissions() async {
     try {
-      print('🔍 Loading submissions for assignment: ${widget.assignment['id']} - ${widget.assignment['title']}');
+      debugPrint('🔍 Loading submissions for assignment: ${widget.assignment['id']} - ${widget.assignment['title']}');
       final submissionsQuery = await FirebaseFirestore.instance
           .collection('submissions')
           .where('assignmentId', isEqualTo: widget.assignment['id'])
           .get();
 
-      print('📊 Found ${submissionsQuery.docs.length} submissions');
+      debugPrint('📊 Found ${submissionsQuery.docs.length} submissions');
       for (var doc in submissionsQuery.docs) {
-        print('   Submission from: ${doc.data()['studentName']} at ${doc.data()['submittedAt']}');
-        print('   Attachments: ${doc.data()['attachments']}');
-        print('   Full data: ${doc.data()}');
+        debugPrint('   Submission from: ${doc.data()['studentName']} at ${doc.data()['submittedAt']}');
+        debugPrint('   Attachments: ${doc.data()['attachments']}');
+        debugPrint('   Full data: ${doc.data()}');
       }
 
       setState(() {
@@ -96,7 +96,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -151,7 +151,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -163,7 +163,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 child: Text(
                   submission['studentName'][0].toUpperCase(),
                   style: const TextStyle(
@@ -199,7 +199,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -215,7 +215,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -252,9 +252,9 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withOpacity(0.3)),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -513,15 +513,15 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
 
     try {
       // Step 1: Download assignment requirements
-      print('📚 Fetching assignment requirements...');
+      debugPrint('📚 Fetching assignment requirements...');
       final assignmentContent = await _fetchAssignmentContent();
       
       // Step 2: Download student submission
-      print('📝 Fetching student submission...');
+      debugPrint('📝 Fetching student submission...');
       final submissionContent = await _fetchSubmissionContent(submission);
       
       // Step 3: Analyze both with AI
-      print('🤖 Analyzing with AI...');
+      debugPrint('🤖 Analyzing with AI...');
       final aiSuggestions = await _generateAISuggestions(
         assignmentContent,
         submissionContent,
@@ -535,7 +535,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
       
     } catch (e) {
       Navigator.pop(context); // Close loading dialog
-      print('Error in AI grading: $e');
+      debugPrint('Error in AI grading: $e');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -572,7 +572,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           final attachmentMap = Map<String, dynamic>.from(attachment);
           final fileName = attachmentMap['name'] ?? 'file';
           
-          print('  📄 Downloading assignment file: $fileName');
+          debugPrint('  📄 Downloading assignment file: $fileName');
           
           // For now, just collect metadata
           // In production, you'd want to extract text from PDFs/docs
@@ -583,7 +583,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           });
           
         } catch (e) {
-          print('  ❌ Error downloading attachment: $e');
+          debugPrint('  ❌ Error downloading attachment: $e');
         }
       }
     }
@@ -613,7 +613,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           final fileSize = attachmentMap['size'] ?? 0;
           final extension = attachmentMap['extension'] ?? 'unknown';
           
-          print('  📄 Analyzing submission file: $fileName');
+          debugPrint('  📄 Analyzing submission file: $fileName');
           
           content['attachments'].add({
             'name': fileName,
@@ -622,7 +622,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           });
           
         } catch (e) {
-          print('  ❌ Error analyzing attachment: $e');
+          debugPrint('  ❌ Error analyzing attachment: $e');
         }
       }
     }
@@ -761,7 +761,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
+                  color: Colors.purple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -861,24 +861,24 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
     try {
       final attachments = submission['attachments'];
       final hasAttachments = attachments != null && attachments is List && attachments.isNotEmpty;
-      print('🔍 _hasAttachments check: $hasAttachments, attachments: $attachments');
+      debugPrint('🔍 _hasAttachments check: $hasAttachments, attachments: $attachments');
       return hasAttachments;
     } catch (e) {
-      print('Error checking attachments: $e');
+      debugPrint('Error checking attachments: $e');
       return false;
     }
   }
 
   List<Widget> _buildAttachmentWidgets(Map<String, dynamic> submission) {
     try {
-      print('🔍 Building attachment widgets...');
+      debugPrint('🔍 Building attachment widgets...');
       final attachments = submission['attachments'];
       if (attachments == null || attachments is! List || attachments.isEmpty) {
-        print('❌ No attachments to build');
+        debugPrint('❌ No attachments to build');
         return [];
       }
 
-      print('✅ Building ${attachments.length} attachment widgets');
+      debugPrint('✅ Building ${attachments.length} attachment widgets');
       return attachments.map<Widget>((attachment) {
         if (attachment == null || attachment is! Map) return const SizedBox.shrink();
         
@@ -891,10 +891,10 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isLink ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+            color: isLink ? Colors.blue.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isLink ? Colors.blue.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+              color: isLink ? Colors.blue.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -940,7 +940,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
         );
       }).toList();
     } catch (e) {
-      print('Error building attachment widgets: $e');
+      debugPrint('Error building attachment widgets: $e');
       return [];
     }
   }
@@ -1043,7 +1043,7 @@ class _TeacherGradingScreenState extends State<TeacherGradingScreen> {
         }
 
       } catch (e) {
-        print('Error viewing attachment: $e');
+        debugPrint('Error viewing attachment: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

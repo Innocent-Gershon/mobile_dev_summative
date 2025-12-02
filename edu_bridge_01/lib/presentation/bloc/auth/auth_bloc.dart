@@ -1,30 +1,37 @@
+// State management and debugging imports
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// Local imports for authentication logic
 import '../../../data/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
+/// Handles all authentication-related business logic for the app
+/// This BLoC manages login, signup, password reset, and user session state
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
 
   AuthBloc({required AuthRepository authRepository})
     : _authRepository = authRepository,
       super(AuthInitial()) {
-    on<LoginWithEmailEvent>(_onLoginWithEmail);
-    on<LoginWithGoogleEvent>(_onLoginWithGoogle);
-    on<AuthSignUpRequested>(_onSignUpRequested);
-    on<SignUpWithEmailEvent>(_onSignUpWithEmail);
-    on<AuthLogoutRequested>(_onLogoutRequested);
-    on<AuthCheckRequested>(_onAuthCheckRequested);
-    on<AuthPasswordResetRequested>(_onPasswordResetRequested);
-    on<CompleteGoogleSignInEvent>(_onCompleteGoogleSignIn);
-    on<CheckEmailVerificationEvent>(_onCheckEmailVerification);
-    on<ResendVerificationEmailEvent>(_onResendVerificationEmail);
-    on<UpdateUserProfile>(_onUpdateUserProfile);
+    // Register event handlers for different authentication actions
+    on<LoginWithEmailEvent>(_onLoginWithEmail);                     // Email/password login
+    on<LoginWithGoogleEvent>(_onLoginWithGoogle);                   // Google OAuth login
+    on<AuthSignUpRequested>(_onSignUpRequested);                    // Legacy signup (kept for compatibility)
+    on<SignUpWithEmailEvent>(_onSignUpWithEmail);                   // Email/password registration
+    on<AuthLogoutRequested>(_onLogoutRequested);                    // User logout
+    on<AuthCheckRequested>(_onAuthCheckRequested);                  // Check current auth status
+    on<AuthPasswordResetRequested>(_onPasswordResetRequested);       // Password reset via email
+    on<CompleteGoogleSignInEvent>(_onCompleteGoogleSignIn);         // Complete Google sign-in with role
+    on<CheckEmailVerificationEvent>(_onCheckEmailVerification);     // Verify email confirmation
+    on<ResendVerificationEmailEvent>(_onResendVerificationEmail);   // Resend verification email
+    on<UpdateUserProfile>(_onUpdateUserProfile);                    // Update user profile info
   }
 
+  /// Handles email and password login attempts
+  /// Shows user-friendly error messages and suggests appropriate actions
   void _onLoginWithEmail(
     LoginWithEmailEvent event,
     Emitter<AuthState> emit,
@@ -32,6 +39,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
+      // Attempt to sign in with Firebase Auth
       final userCredential = await _authRepository.signInWithEmailAndPassword(
         email: event.email,
         password: event.password,
@@ -39,8 +47,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       final user = userCredential.user;
       if (user != null) {
+        // Fetch additional user data from Firestore
         final userData = await _authRepository.getUserData(user.uid);
 
+        // Successfully authenticated - emit success state
         emit(
           AuthAuthenticated(
             userId: user.uid,
@@ -55,34 +65,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on FirebaseAuthException catch (e) {
       String errorMessage;
 
+      // Handle different Firebase Auth error codes with helpful messages
       switch (e.code) {
         case 'user-not-found':
+          // User doesn't exist - suggest registration
           errorMessage =
               '❌ No account found with this email. You need to register first!';
           emit(AuthError('SHOW_REGISTER_DIALOG:$errorMessage'));
           return;
         case 'wrong-password':
+          // Wrong password - offer password reset
           errorMessage = '🔐 Oops! Wrong password. Double-check and try again.';
           emit(AuthError('SHOW_PASSWORD_DIALOG:$errorMessage'));
           return;
         case 'invalid-credential':
-          // Check if user exists by trying to fetch sign-in methods
-          try {
-            final signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(event.email);
-            if (signInMethods.isNotEmpty) {
-              // User exists, so it's wrong password
-              errorMessage = '🔐 Oops! Wrong password. Double-check and try again.';
-              emit(AuthError('SHOW_PASSWORD_DIALOG:$errorMessage'));
-            } else {
-              // No account with this email
-              errorMessage = '❌ No account found with this email. You need to register first!';
-              emit(AuthError('SHOW_REGISTER_DIALOG:$errorMessage'));
-            }
-          } catch (fetchError) {
-            // If fetchSignInMethodsForEmail fails, assume no account exists
-            errorMessage = '❌ No account found with this email. You need to register first!';
-            emit(AuthError('SHOW_REGISTER_DIALOG:$errorMessage'));
-          }
+          // Invalid credential - could be wrong password or no account
+          // Since fetchSignInMethodsForEmail is deprecated, we'll assume wrong password
+          errorMessage = '🔐 Invalid email or password. Please check and try again.';
+          emit(AuthError('SHOW_PASSWORD_DIALOG:$errorMessage'));
           return;
         case 'invalid-email':
           errorMessage =
@@ -108,7 +108,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (e is FirebaseException) {
         if (kDebugMode) {
           // ignore: avoid_print
-          // print(
+          // debugPrint(
           //   'AuthBloc _onLoginWithEmail FirebaseException: ${e.code} ${e.message}',
           // );
           emit(AuthError('Firestore error: ${e.code}. ${e.message}'));
@@ -135,7 +135,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         // and show a slightly more detailed message in debug builds.
         // User-facing message remains generic in release builds.
         // ignore: avoid_print
-        // print('AuthBloc _onLoginWithEmail unexpected error: $e\n$st');
+        // debugPrint('AuthBloc _onLoginWithEmail unexpected error: $e\n$st');
         emit(
           AuthError(
             'An unexpected error occurred. Please try again. Details: ${e.toString()}',
@@ -147,6 +147,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  /// Handles Google OAuth sign-in process
+  /// Manages account linking and role selection for new Google users
   void _onLoginWithGoogle(
     LoginWithGoogleEvent event,
     Emitter<AuthState> emit,
@@ -154,9 +156,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
+      // Initiate Google sign-in flow
       final userCredential = await _authRepository.signInWithGoogle();
 
       if (userCredential == null) {
+        // User cancelled the sign-in process
         emit(AuthUnauthenticated());
         return;
       }
@@ -167,20 +171,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      // First check if user data exists by UID
+      // Try to find existing user data by Firebase UID first
       var userData = await _authRepository.getUserData(user.uid);
 
-      // If no data by UID, check by email (for existing email/password accounts)
+      // If no data found by UID, check if they have an existing email/password account
+      // This handles the case where someone signs up with email then tries Google
       if (userData == null && user.email != null) {
         userData = await _authRepository.getUserDataByEmail(user.email!);
 
-        // If found by email, link the accounts
+        // Link the Google account to their existing profile
         if (userData != null) {
           await _authRepository.linkGoogleAccount(user.uid, userData);
         }
       }
 
       if (userData == null) {
+        // New Google user - need to collect their role (Student/Teacher/Parent/Admin)
         emit(
           AuthGoogleSignInNeedsRole(
             user: user,
@@ -189,6 +195,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ),
         );
       } else {
+        // Existing user - log them in directly
         emit(
           AuthAuthenticated(
             userId: user.uid,
@@ -248,6 +255,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  /// Handles new user registration with email and password
+  /// Includes special validation for parent accounts linking to students
   void _onSignUpWithEmail(
     SignUpWithEmailEvent event,
     Emitter<AuthState> emit,
@@ -255,7 +264,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      // For parents, validate student exists first
+      // Special validation for parent accounts
+      // Parents must link to an existing student, so we verify the student exists
       if (event.userType == 'Parent' &&
           event.additionalData['childName'] != null) {
         final studentName = event.additionalData['childName'] as String;
@@ -264,11 +274,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         );
 
         if (!studentExists) {
+          // Student not found - show helpful error
           emit(AuthError('STUDENT_NOT_FOUND:$studentName'));
           return;
         }
       }
 
+      // Create the Firebase Auth account
       final userCredential = await _authRepository
           .createUserWithEmailAndPassword(
             email: event.email,
@@ -277,6 +289,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       final user = userCredential.user;
       if (user != null) {
+        // Save additional user information to Firestore
         await _authRepository.saveUserData(
           uid: user.uid,
           email: event.email,
@@ -285,7 +298,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           additionalData: event.additionalData,
         );
 
-        // Skip email verification only for admin users
+        // Admin users don't need email verification (for easier setup)
         if (event.userType == 'Admin') {
           emit(
             AuthAuthenticated(
@@ -296,6 +309,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             ),
           );
         } else {
+          // Send verification email for security
           await user.sendEmailVerification();
           emit(AuthEmailVerificationSent(event.email));
         }

@@ -18,14 +18,19 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // Form validation key to check if all fields are properly filled
   final _formKey = GlobalKey<FormState>();
+  
+  // Text controllers to manage user input
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _studentIdController = TextEditingController();
-  final _employeeIdController = TextEditingController();
-  bool _obscurePassword = true;
-  String _selectedUserType = AppConstants.student;
-  bool _isDropdownOpen = false;
+  final _studentIdController = TextEditingController();  // For student name input
+  final _employeeIdController = TextEditingController(); // For teacher name input
+  
+  // UI state variables
+  bool _obscurePassword = true;                    // Toggle password visibility
+  String _selectedUserType = AppConstants.student; // Currently selected user role
+  bool _isDropdownOpen = false;                    // Controls dropdown animation
 
   @override
   void dispose() {
@@ -49,12 +54,14 @@ class _LoginPageState extends State<LoginPage> {
             
 
             
-            // Check for special dialog triggers
+            // Parse special error messages that should trigger dialogs
+            // These come from the backend with specific prefixes
             if (state.message.startsWith('SHOW_REGISTER_DIALOG:')) {
               displayMessage = state.message.substring('SHOW_REGISTER_DIALOG:'.length);
               shouldShowDialog = true;
             }
             
+            // Handle wrong password errors with helpful dialog
             bool shouldShowPasswordDialog = false;
             if (state.message.startsWith('SHOW_PASSWORD_DIALOG:')) {
               displayMessage = state.message.substring('SHOW_PASSWORD_DIALOG:'.length);
@@ -72,7 +79,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
             
-            // Show register dialog if user not found
+            // Show helpful dialog when user doesn't exist yet
+            // Small delay makes the UX feel more natural
             if (shouldShowDialog) {
               Future.delayed(const Duration(milliseconds: 800), () {
                 if (mounted) {
@@ -111,7 +119,8 @@ class _LoginPageState extends State<LoginPage> {
               });
             }
             
-            // Show password reset dialog for wrong password
+            // Offer password reset when user enters wrong password
+            // This is more helpful than just showing an error
             if (shouldShowPasswordDialog) {
               Future.delayed(const Duration(milliseconds: 800), () {
                 if (mounted) {
@@ -156,7 +165,8 @@ class _LoginPageState extends State<LoginPage> {
               (route) => false,
             );
           } else if (state is AuthGoogleSignInNeedsRole) {
-            // Show role selection dialog for Google sign-in
+            // Google sign-in successful but we need to know their role
+            // Can't dismiss this dialog - user must choose a role
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -184,8 +194,7 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, state) {
           return Stack(
             children: [
-              // --- Main Content (always present) ---
-              // This is where your form and other UI elements reside.
+              // Main login form - always visible behind any overlays
               SafeArea(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24.0),
@@ -196,7 +205,7 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         const SizedBox(height: 1),
 
-                        // EduBridge title with icon
+                        // App branding - logo and name at the top
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -241,7 +250,8 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 32),
 
-                        // Creative user type selector
+                        // Role selector with nice gradient design
+                        // Positioned on the right side for better visual balance
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -314,7 +324,8 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 32),
 
-                        // Role-specific name field
+                        // Show different name fields based on selected role
+                        // This helps personalize the login experience
                         if (_selectedUserType == AppConstants.student)
                           TextFormField(
                             controller: _studentIdController,
@@ -442,15 +453,15 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 32),
 
-                        // Login button
+                        // Main login button - full width for better mobile UX
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: state is AuthLoading
-                                ? null
+                                ? null  // Disable button while loading
                                 : () {
                                     if (_formKey.currentState!.validate()) {
-                                      // Check if fields are not empty
+                                      // Double-check required fields before submitting
                                       if (_emailController.text.trim().isEmpty) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
@@ -674,15 +685,14 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              // --- Modal Barrier (full-screen blur overlay) ---
-              // This layer will appear when the dropdown is open.
+              // Blur overlay when dropdown is open - creates nice focus effect
+              // Tapping anywhere outside closes the dropdown
               if (_isDropdownOpen)
                 Positioned.fill(
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
-                        _isDropdownOpen =
-                            false; // Close dropdown on tap outside
+                        _isDropdownOpen = false;
                       });
                     },
                     child: AnimatedContainer(
@@ -703,10 +713,11 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-              // --- Custom Dropdown (on top of the blur) ---
+              // Custom dropdown menu positioned below the selector
+              // Uses Material for proper elevation and shadows
               if (_isDropdownOpen)
                 Positioned(
-                  top: 280,
+                  top: 280,  // Positioned below the role selector
                   right: 24,
                   child: Material(
                     color: Colors.transparent,

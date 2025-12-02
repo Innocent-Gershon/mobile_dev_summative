@@ -79,6 +79,16 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
     
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -86,12 +96,21 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              border: Border.all(color: isDark ? const Color(0xFF334155) : AppColors.border, width: 1),
+              gradient: LinearGradient(
+                colors: [
+                  isDark ? const Color(0xFF334155) : AppColors.border.withValues(alpha: 0.3),
+                  isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: isDark ? const Color(0xFF64748B) : AppColors.border.withValues(alpha: 0.5),
+                width: 0.5,
+              ),
             ),
             child: IconButton(
               onPressed: () {},
-              icon: Icon(Icons.more_horiz, color: isDark ? Colors.white : AppColors.textPrimary, size: 24),
+              icon: Icon(Icons.more_horiz_rounded, color: isDark ? Colors.white : AppColors.textPrimary, size: 22),
               padding: EdgeInsets.zero,
             ),
           ),
@@ -101,12 +120,21 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  border: Border.all(color: isDark ? const Color(0xFF334155) : AppColors.border, width: 1),
+                  gradient: LinearGradient(
+                    colors: [
+                      isDark ? const Color(0xFF334155) : AppColors.border.withValues(alpha: 0.3),
+                      isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.1),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF64748B) : AppColors.border.withValues(alpha: 0.5),
+                    width: 0.5,
+                  ),
                 ),
                 child: IconButton(
                   onPressed: () {},
-                  icon: Icon(Icons.camera_alt, color: isDark ? Colors.white : AppColors.textPrimary, size: 24),
+                  icon: Icon(Icons.camera_alt_rounded, color: isDark ? Colors.white : AppColors.textPrimary, size: 22),
                   padding: EdgeInsets.zero,
                 ),
               ),
@@ -115,12 +143,21 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary],
+                  ),
                   borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: IconButton(
                   onPressed: () => _navigateToNewChat(),
-                  icon: const Icon(Icons.add, color: Colors.white, size: 24),
+                  icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
                   padding: EdgeInsets.zero,
                 ),
               ),
@@ -155,8 +192,24 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
           const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  isDark ? const Color(0xFF1E293B) : const Color(0xFFF8F9FA),
+                  isDark ? const Color(0xFF334155) : const Color(0xFFF0F0F0),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.3),
+                width: 0.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: TextField(
               controller: _searchController,
@@ -164,9 +217,20 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
               decoration: InputDecoration(
                 hintText: AppLocalizations.translate(context, 'search'),
                 hintStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9E9E9E)),
-                prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9E9E9E), size: 22),
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
             ),
           ),
@@ -200,18 +264,41 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
               onTap: () {
                 setState(() => _selectedFilter = filter['name']!);
               },
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  gradient: isSelected
+                      ? const LinearGradient(
+                          colors: [AppColors.primary, AppColors.secondary],
+                        )
+                      : null,
+                  color: isSelected ? null : Colors.transparent,
                   borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF475569)
+                            : AppColors.border.withValues(alpha: 0.3)),
+                    width: 0.5,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Text(
                   filter['name']!,
                   style: TextStyle(
                     color: isSelected ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppColors.textPrimary),
                     fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),

@@ -439,9 +439,11 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
+          splashColor: AppColors.primary.withValues(alpha: 0.1),
+          highlightColor: AppColors.primary.withValues(alpha: 0.05),
           onTap: () => _navigateToChatDetail(chat),
           child: Padding(
             padding: const EdgeInsets.all(16),

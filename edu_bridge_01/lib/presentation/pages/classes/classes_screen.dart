@@ -6,7 +6,7 @@ import '../../bloc/language/language_bloc.dart';
 import '../../../data/models/class_model.dart';
 import '../../bloc/classes/classes_bloc.dart';
 import '../../bloc/classes/classes_event.dart';
-import '../../bloc/classes/classes_state.dart';
+
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../assignments/create_assignment_screen.dart';
@@ -37,9 +37,9 @@ class ClassesView extends StatefulWidget {
 }
 
 class _ClassesViewState extends State<ClassesView> {
-  String _searchQuery = '';
   bool _isSearching = false;
   final _searchController = TextEditingController();
+  // String _searchQuery = ''; // Removed unused field
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,7 @@ class _ClassesViewState extends State<ClassesView> {
                 setState(() {
                   _isSearching = !_isSearching;
                   if (!_isSearching) {
-                    _searchQuery = '';
+                    // _searchQuery = ''; // Removed unused field
                     _searchController.clear();
                   }
                 });
@@ -166,7 +166,7 @@ class _ClassesViewState extends State<ClassesView> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 onChanged: (value) {
-                  setState(() => _searchQuery = value);
+                  // setState(() => _searchQuery = value); // Removed unused functionality
                 },
               ),
             )

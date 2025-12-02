@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/models/chat_model.dart';
 import 'chat_event.dart';
@@ -19,25 +20,25 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   Future<void> _onLoadChats(LoadChats event, Emitter<ChatState> emit) async {
-    print('ChatBloc: Loading chats for user ${event.userId}');
+    debugPrint('ChatBloc: Loading chats for user ${event.userId}');
     emit(ChatLoading());
     try {
       await _chatsSubscription?.cancel();
-      print('ChatBloc: Setting up chats stream');
+      debugPrint('ChatBloc: Setting up chats stream');
       await emit.forEach<List<ChatModel>>(
         chatRepository.getChats(event.userId),
         onData: (chats) {
-          print('ChatBloc: Received ${chats.length} chats from repository');
-          print('ChatBloc: Emitting ChatsLoaded state');
+          debugPrint('ChatBloc: Received ${chats.length} chats from repository');
+          debugPrint('ChatBloc: Emitting ChatsLoaded state');
           return ChatsLoaded(chats);
         },
         onError: (error, stackTrace) {
-          print('ChatBloc: Error loading chats: $error');
+          debugPrint('ChatBloc: Error loading chats: $error');
           return ChatsLoaded([]); // Show empty state instead of error
         },
       );
     } catch (e) {
-      print('ChatBloc: Exception loading chats: $e');
+      debugPrint('ChatBloc: Exception loading chats: $e');
       emit(ChatsLoaded([])); // Show empty state instead of error
     }
   }

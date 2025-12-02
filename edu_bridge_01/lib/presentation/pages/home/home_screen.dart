@@ -1150,14 +1150,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   Widget _buildRecentUpdatesSection() {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 24, 20, 0),
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Text(
         'Recent Updates',
         style: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1A1A1A),
+          color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
           height: 1.2,
         ),
       ),

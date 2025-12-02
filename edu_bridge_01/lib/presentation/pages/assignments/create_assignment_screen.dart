@@ -22,12 +22,12 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   
   DateTime? _selectedDate;
   List<Map<String, dynamic>> _allStudents = [];
-  List<String> _selectedStudents = [];
+  final List<String> _selectedStudents = [];
   bool _isLoadingStudents = false;
 
   bool _isUploading = false;
-  List<AttachmentModel> _attachments = [];
-  Map<String, double> _uploadProgress = {};
+  final List<AttachmentModel> _attachments = [];
+  final Map<String, double> _uploadProgress = {};
   
   // Content type selection
   String _contentType = 'Assignment';
@@ -133,7 +133,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -154,7 +154,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           
           // Content Type Dropdown
           DropdownButtonFormField<String>(
-            value: _contentType,
+            initialValue: _contentType,
             decoration: InputDecoration(
               labelText: 'Content Type',
               prefixIcon: const Icon(Icons.category),
@@ -198,7 +198,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
           const SizedBox(height: 16),
           
           DropdownButtonFormField<String>(
-            value: _subjectController.text.isEmpty ? null : _subjectController.text,
+            initialValue: _subjectController.text.isEmpty ? null : _subjectController.text,
             decoration: InputDecoration(
               labelText: 'Subject',
               prefixIcon: const Icon(Icons.book),
@@ -293,7 +293,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.red.shade300),
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.red.withOpacity(0.05),
+                    color: Colors.red.withValues(alpha: 0.05),
                   ),
                   child: const Row(
                     children: [
@@ -313,7 +313,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.05),
+                    color: Colors.green.withValues(alpha: 0.05),
                     border: Border.all(color: Colors.green.shade300),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -376,7 +376,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

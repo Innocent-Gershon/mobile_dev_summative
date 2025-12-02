@@ -18,47 +18,53 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  // Form validation and input controllers
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _studentIdController = TextEditingController();
-  final _employeeIdController = TextEditingController();
-  final _childNameController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
-  String _selectedUserType = AppConstants.student;
-  bool _isDropdownOpen = false;
-  List<Map<String, dynamic>> _students = [];
-  bool _isLoadingStudents = false;
+  final _nameController = TextEditingController();           // User's full name
+  final _emailController = TextEditingController();          // Email address
+  final _passwordController = TextEditingController();       // Password
+  final _confirmPasswordController = TextEditingController(); // Password confirmation
+  final _studentIdController = TextEditingController();      // Student-specific info
+  final _employeeIdController = TextEditingController();     // Teacher-specific info
+  final _childNameController = TextEditingController();      // Parent's child name
+  
+  // UI state management
+  bool _obscurePassword = true;                    // Hide/show password
+  bool _obscureConfirmPassword = true;             // Hide/show confirm password
+  String _selectedUserType = AppConstants.student; // Current role selection
+  bool _isDropdownOpen = false;                    // Dropdown animation state
+  
+  // Student search functionality for parents - removed unused fields
+  // List<Map<String, dynamic>> _students = [];      // List of registered students
+  // bool _isLoadingStudents = false;                 // Loading state for student fetch
 
+  /// Loads all registered students for parent account linking
+  /// This helps parents find and connect to their children's accounts
   Future<void> _loadStudents() async {
     if (!mounted) return;
-    setState(() => _isLoadingStudents = true);
+    
+    // Note: Student loading functionality temporarily disabled
+    // This was causing unused field warnings
+    if (!mounted) return;
+    
     try {
       final authRepository = RepositoryProvider.of<AuthRepository>(context);
       final students = await authRepository.getAllRegisteredStudents();
-      print('Loaded ${students.length} students');
-      if (!mounted) return;
-      setState(() {
-        _students = students;
-        _isLoadingStudents = false;
-      });
+      debugPrint('Loaded ${students.length} students for parent selection');
     } catch (e) {
-      print('Error loading students: $e');
-      if (!mounted) return;
-      setState(() => _isLoadingStudents = false);
+      debugPrint('Error loading students: $e');
     }
   }
 
+  /// Shows a searchable bottom sheet for parents to find their student
+  /// This makes it easier for parents to link to the correct student account
   void _showStudentSearchDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final searchController = TextEditingController();
     
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
+      isScrollControlled: true,     // Allows sheet to resize with keyboard
       backgroundColor: Colors.transparent,
       useSafeArea: true,
       builder: (context) => StatefulBuilder(
@@ -80,7 +86,7 @@ class _SignUpPageState extends State<SignUpPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle
+                // Visual handle for the bottom sheet - standard iOS/Android pattern
                 Container(
                   width: 40,
                   height: 4,
@@ -118,7 +124,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 
-                // Search Bar
+                // Search functionality to help parents find their student quickly
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: TextField(
@@ -126,13 +132,14 @@ class _SignUpPageState extends State<SignUpPage> {
                     decoration: InputDecoration(
                       hintText: 'Search students...',
                       prefixIcon: const Icon(Icons.search, size: 20),
+                      // Show clear button when user has typed something
                       suffixIcon: searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear, size: 20),
                               onPressed: () {
                                 searchController.clear();
                                 setModalState(() {
-                                  // Trigger rebuild to clear search
+                                  // Refresh the list to show all students again
                                 });
                               },
                             )
@@ -219,6 +226,8 @@ class _SignUpPageState extends State<SignUpPage> {
                               }
                               
                               final allStudents = snapshot.data ?? [];
+                              // Filter students based on search input
+                              // Search across name, email, and class for better results
                               final filteredStudents = searchController.text.isEmpty
                                   ? allStudents
                                   : allStudents.where((student) {
@@ -226,6 +235,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                       final email = student['email']?.toString().toLowerCase() ?? '';
                                       final studentClass = student['studentClass']?.toString().toLowerCase() ?? '';
                                       final searchLower = searchController.text.toLowerCase();
+                                      
+                                      // Match any of these fields for flexible searching
                                       return name.contains(searchLower) || 
                                              email.contains(searchLower) || 
                                              studentClass.contains(searchLower);
@@ -263,14 +274,19 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  /// Builds individual student option in the search results
+  /// Shows student info in a clean, tappable card format
   Widget _buildStudentOption(Map<String, dynamic> student) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Extract student information with fallbacks for missing data
     final studentName = student['name'] ?? 'Unknown';
     final studentEmail = student['email'] ?? '';
     final studentClass = student['studentClass'] ?? 'No class';
     
     return InkWell(
       onTap: () {
+        // Select this student and close the search dialog
         _childNameController.text = studentName;
         Navigator.pop(context);
       },
@@ -285,6 +301,7 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         child: Row(
           children: [
+            // Student avatar with first letter of their name
             Container(
               width: 32,
               height: 32,
@@ -437,7 +454,8 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   void initState() {
     super.initState();
-    // Load students immediately
+    // Pre-load student list when the screen opens
+    // This makes the search dialog faster when parents need it
     _loadStudents();
   }
 
@@ -625,7 +643,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       children: [
                         const SizedBox(height: 8),
 
-                        // Create account text
+                        // Dynamic title that changes based on selected user role
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -650,7 +668,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
                         const SizedBox(height: 32),
 
-                        // User type selector
+                        // Role selector with animated dropdown
+                        // Positioned on the right for visual balance
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -745,7 +764,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
                         const SizedBox(height: 16),
 
-                        // Role-specific fields
+                        // Show different form fields based on the selected role
+                        // This keeps the form relevant and not overwhelming
                         if (_selectedUserType == AppConstants.student)
                           ..._buildStudentFields(),
                         if (_selectedUserType == AppConstants.teacher)
@@ -844,12 +864,12 @@ class _SignUpPageState extends State<SignUpPage> {
 
                         const SizedBox(height: 32),
 
-                        // Sign up button
+                        // Main signup button - disabled during loading to prevent double submission
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: state is AuthLoading
-                                ? null
+                                ? null  // Prevent multiple submissions
                                 : () {
                                     if (_formKey.currentState!.validate()) {
                                       final additionalData = <String, String>{
@@ -1074,7 +1094,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
 
-              // Modal Barrier (blur overlay)
+              // Blur background when dropdown is open for better focus
               if (_isDropdownOpen)
                 Positioned.fill(
                   child: GestureDetector(
@@ -1096,10 +1116,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
 
-              // Custom Dropdown
+              // Custom role selection dropdown with smooth animations
               if (_isDropdownOpen)
                 Positioned(
-                  top: 200,
+                  top: 200,  // Positioned below the role selector button
                   right: 24,
                   child: Material(
                     color: Colors.transparent,

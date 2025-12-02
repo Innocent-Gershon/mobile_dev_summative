@@ -75,7 +75,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 }
                 
                 // Determine which user ID to use for notifications
-                String targetUserId = _userId!;
+                String targetUserId = _userId;
                 if (authState is AuthAuthenticated && authState.userType == 'Parent' && _studentId != null) {
                   targetUserId = _studentId!;
                 }
@@ -294,7 +294,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             .doc(notificationId)
             .update({'isRead': true});
       } catch (e) {
-// print('Error marking notification as read: $e');
+// debugPrint('Error marking notification as read: $e');
       }
     }
   }

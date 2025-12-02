@@ -61,7 +61,7 @@ class _AssignmentDetailsSheetState extends State<AssignmentDetailsSheet> {
         });
       }
     } catch (e) {
-      // print('Error loading assignment data: $e');
+      // debugPrint('Error loading assignment data: $e');
     }
   }
 

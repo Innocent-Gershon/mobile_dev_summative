@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/constants/app_constants.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -674,28 +672,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Future<String?> _uploadImageToFirebase() async {
-    if (_imageData == null) return _imageUrl;
-    
-    final authState = context.read<AuthBloc>().state;
-    if (authState is! AuthAuthenticated) return null;
-    
-    try {
-      final fileName = 'profile_${authState.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('profile_images/$fileName');
-      
-      final bytes = base64Decode(_imageData!.split(',')[1]);
-      final uploadTask = ref.putData(
-        bytes,
-        SettableMetadata(contentType: 'image/jpeg'),
-      );
-      
-      final snapshot = await uploadTask;
-      return await snapshot.ref.getDownloadURL();
-    } catch (e) {
-      throw Exception('Failed to upload image: $e');
-    }
-  }
+  // Removed unused method _uploadImageToFirebase
 
   String _getInitials(String name) {
     final parts = name.trim().split(' ');

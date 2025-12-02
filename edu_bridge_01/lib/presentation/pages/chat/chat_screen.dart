@@ -44,10 +44,10 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
-        print('Loading chats for user: ${authState.userId}');
+        debugPrint('Loading chats for user: ${authState.userId}');
         context.read<ChatBloc>().add(LoadChats(authState.userId));
       } else {
-        print('User not authenticated, cannot load chats');
+        debugPrint('User not authenticated, cannot load chats');
       }
     });
   }
@@ -240,10 +240,10 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
   Widget _buildChatList() {
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
-        print('ChatBloc state: ${state.runtimeType}');
+        debugPrint('ChatBloc state: ${state.runtimeType}');
         
         if (state is ChatLoading) {
-          print('Showing loading indicator');
+          debugPrint('Showing loading indicator');
           return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
@@ -252,16 +252,16 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
         }
 
         if (state is ChatsLoaded) {
-          print('Chats loaded: ${state.chats.length} chats');
+          debugPrint('Chats loaded: ${state.chats.length} chats');
           if (state.chats.isEmpty) {
-            print('No chats found, showing empty state');
+            debugPrint('No chats found, showing empty state');
             return _buildEmptyState();
           }
           return _buildChatsListView(state.chats);
         }
 
         if (state is ChatError) {
-          print('Chat error: ${state.message}');
+          debugPrint('Chat error: ${state.message}');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -293,7 +293,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
           );
         }
 
-        print('Showing empty state (default)');
+        debugPrint('Showing empty state (default)');
         return _buildEmptyState();
       },
     );

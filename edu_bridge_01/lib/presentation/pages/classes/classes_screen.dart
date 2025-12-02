@@ -446,14 +446,16 @@ class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: (subject['color'] as Color).withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: (subject['color'] as Color).withValues(alpha: 0.35),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -2,
                   ),
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.1),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                    spreadRadius: -4,
                   ),
                 ],
               ),

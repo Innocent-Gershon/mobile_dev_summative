@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/localization/app_localizations.dart';
-import '../../bloc/language/language_bloc.dart';
+// import '../../../core/localization/app_localizations.dart';
+// import '../../bloc/language/language_bloc.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/models/chat_model.dart';
 import '../../bloc/chat/chat_bloc.dart';
@@ -155,17 +155,13 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          BlocBuilder<LanguageBloc, LanguageState>(
-            builder: (context, languageState) {
-              return Text(
-                AppLocalizations.translate(context, 'messages'),
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                      fontSize: 32,
-                    ),
-              );
-            },
+          Text(
+            'Messages',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                  fontSize: 32,
+                ),
           ),
           const SizedBox(height: 16),
           Container(
@@ -177,7 +173,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
               controller: _searchController,
               style: TextStyle(color: isDark ? Colors.white : Colors.black),
               decoration: InputDecoration(
-                hintText: AppLocalizations.translate(context, 'search'),
+                hintText: 'Search conversations...',
                 hintStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9E9E9E)),
                 prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9E9E9E), size: 22),
                 border: InputBorder.none,
@@ -672,30 +668,28 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
             ),
           ),
           const SizedBox(height: 32),
-          BlocBuilder<LanguageBloc, LanguageState>(
-            builder: (context, languageState) {
-              return Column(
-                children: [
-                  Text(
-                    AppLocalizations.translate(context, 'no_conversations'),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                          letterSpacing: -0.5,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      AppLocalizations.translate(context, 'start_conversation'),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                                height: 1.5,
-                              ),
+          Column(
+            children: [
+              Text(
+                'No conversations yet',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      letterSpacing: -0.5,
                     ),
-                  ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'Start a conversation with your\nteachers, students, or parents',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                            height: 1.5,
+                          ),
+                ),
+              ),
                   const SizedBox(height: 24),
                   Container(
                     decoration: BoxDecoration(
@@ -742,9 +736,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                       ),
                     ),
                   ),
-                ],
-              );
-            },
+            ],
           ),
         ],
       ),

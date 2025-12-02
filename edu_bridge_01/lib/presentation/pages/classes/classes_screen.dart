@@ -606,23 +606,24 @@ class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin
                                       return Stack(
                                         children: [
                                           Container(
-                                            height: 6,
+                                            height: 8,
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withValues(alpha: 0.3),
-                                              borderRadius: BorderRadius.circular(3),
+                                              color: Colors.white.withValues(alpha: 0.25),
+                                              borderRadius: BorderRadius.circular(4),
                                             ),
                                           ),
                                           FractionallySizedBox(
                                             widthFactor: animatedProgress,
                                             child: Container(
-                                              height: 6,
+                                              height: 8,
                                               decoration: BoxDecoration(
                                                 color: Colors.white,
-                                                borderRadius: BorderRadius.circular(3),
+                                                borderRadius: BorderRadius.circular(4),
                                                 boxShadow: [
                                                   BoxShadow(
-                                                    color: Colors.white.withValues(alpha: 0.5),
-                                                    blurRadius: 4,
+                                                    color: Colors.white.withValues(alpha: 0.6),
+                                                    blurRadius: 6,
+                                                    spreadRadius: 1,
                                                   ),
                                                 ],
                                               ),

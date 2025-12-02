@@ -436,14 +436,14 @@ class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin
           child: Opacity(
             opacity: value,
             child: Container(
-              margin: const EdgeInsets.only(bottom: 24),
+              margin: const EdgeInsets.only(bottom: 28),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: subject['gradient'] as List<Color>,
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
                     color: (subject['color'] as Color).withValues(alpha: 0.3),

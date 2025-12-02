@@ -642,15 +642,19 @@ class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin
                             ),
                             const SizedBox(width: 16),
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.white.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 0.5,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.arrow_forward_rounded,
                                 color: Colors.white,
-                                size: 20,
+                                size: 22,
                               ),
                             ),
                           ],

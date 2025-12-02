@@ -79,6 +79,16 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
     
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -86,12 +96,21 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              border: Border.all(color: isDark ? const Color(0xFF334155) : AppColors.border, width: 1),
+              gradient: LinearGradient(
+                colors: [
+                  isDark ? const Color(0xFF334155) : AppColors.border.withValues(alpha: 0.3),
+                  isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: isDark ? const Color(0xFF64748B) : AppColors.border.withValues(alpha: 0.5),
+                width: 0.5,
+              ),
             ),
             child: IconButton(
               onPressed: () {},
-              icon: Icon(Icons.more_horiz, color: isDark ? Colors.white : AppColors.textPrimary, size: 24),
+              icon: Icon(Icons.more_horiz_rounded, color: isDark ? Colors.white : AppColors.textPrimary, size: 22),
               padding: EdgeInsets.zero,
             ),
           ),
@@ -101,12 +120,21 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  border: Border.all(color: isDark ? const Color(0xFF334155) : AppColors.border, width: 1),
+                  gradient: LinearGradient(
+                    colors: [
+                      isDark ? const Color(0xFF334155) : AppColors.border.withValues(alpha: 0.3),
+                      isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.1),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF64748B) : AppColors.border.withValues(alpha: 0.5),
+                    width: 0.5,
+                  ),
                 ),
                 child: IconButton(
                   onPressed: () {},
-                  icon: Icon(Icons.camera_alt, color: isDark ? Colors.white : AppColors.textPrimary, size: 24),
+                  icon: Icon(Icons.camera_alt_rounded, color: isDark ? Colors.white : AppColors.textPrimary, size: 22),
                   padding: EdgeInsets.zero,
                 ),
               ),
@@ -115,12 +143,21 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary],
+                  ),
                   borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: IconButton(
                   onPressed: () => _navigateToNewChat(),
-                  icon: const Icon(Icons.add, color: Colors.white, size: 24),
+                  icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
                   padding: EdgeInsets.zero,
                 ),
               ),

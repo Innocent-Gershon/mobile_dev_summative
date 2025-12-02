@@ -192,8 +192,24 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
           const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  isDark ? const Color(0xFF1E293B) : const Color(0xFFF8F9FA),
+                  isDark ? const Color(0xFF334155) : const Color(0xFFF0F0F0),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.3),
+                width: 0.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: TextField(
               controller: _searchController,
@@ -201,9 +217,20 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
               decoration: InputDecoration(
                 hintText: AppLocalizations.translate(context, 'search'),
                 hintStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9E9E9E)),
-                prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9E9E9E), size: 22),
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
             ),
           ),

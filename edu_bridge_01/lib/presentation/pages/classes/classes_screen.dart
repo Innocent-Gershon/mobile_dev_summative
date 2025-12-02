@@ -223,13 +223,13 @@ class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin
             child: _isSearching
               ? Container(
                   key: const ValueKey('search'),
-                  margin: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  margin: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                      width: 1,
+                      width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -259,7 +259,7 @@ class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin
                         size: 22,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                     ),
                     onChanged: (value) {
                       setState(() => _searchQuery = value.toLowerCase());

@@ -410,32 +410,40 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             isDark ? const Color(0xFF1E293B) : Colors.white,
             isDark ? const Color(0xFF334155) : const Color(0xFFFAFAFA),
+            isDark ? const Color(0xFF475569) : const Color(0xFFF5F5F5),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.8),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
         ],
         border: Border.all(
-          color: isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.5),
+          color: isDark ? const Color(0xFF64748B) : AppColors.border.withValues(alpha: 0.3),
           width: 0.5,
         ),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
+          splashColor: AppColors.primary.withValues(alpha: 0.1),
+          highlightColor: AppColors.primary.withValues(alpha: 0.05),
           onTap: () => _navigateToChatDetail(chat),
           child: Padding(
             padding: const EdgeInsets.all(16),

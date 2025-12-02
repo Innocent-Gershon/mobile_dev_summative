@@ -40,32 +40,17 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
   @override
   void initState() {
     super.initState();
-    // Load chats for the current user
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
-        debugPrint('Loading chats for user: ${authState.userId}');
         context.read<ChatBloc>().add(LoadChats(authState.userId));
-      } else {
-        debugPrint('User not authenticated, cannot load chats');
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final content = Column(
-      children: [
-        _buildHeader(),
-        _buildSearchBar(),
-        _buildFilterTabs(),
-        const SizedBox(height: 10),
-        Expanded(child: _buildChatList()),
-      ],
-    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -75,15 +60,15 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : AppColors.background,
         body: SafeArea(
-          child: isLandscape
-              ? SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height,
-                    child: content,
-                  ),
-                )
-              : content,
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildSearchBar(),
+              _buildFilterTabs(),
+              const SizedBox(height: 10),
+              Expanded(child: _buildChatList()),
+            ],
+          ),
         ),
       ),
     );
@@ -240,10 +225,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
   Widget _buildChatList() {
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
-        debugPrint('ChatBloc state: ${state.runtimeType}');
-        
         if (state is ChatLoading) {
-          debugPrint('Showing loading indicator');
           return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
@@ -252,16 +234,13 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
         }
 
         if (state is ChatsLoaded) {
-          debugPrint('Chats loaded: ${state.chats.length} chats');
           if (state.chats.isEmpty) {
-            debugPrint('No chats found, showing empty state');
             return _buildEmptyState();
           }
           return _buildChatsListView(state.chats);
         }
 
         if (state is ChatError) {
-          debugPrint('Chat error: ${state.message}');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -293,14 +272,12 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
           );
         }
 
-        debugPrint('Showing empty state (default)');
         return _buildEmptyState();
       },
     );
   }
 
   Widget _buildChatsListView(List<ChatModel> chats) {
-    // Filter chats based on search query
     final filteredChats = _searchController.text.isEmpty
         ? chats
         : chats.where((chat) {
@@ -308,7 +285,6 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                    chat.lastMessage.toLowerCase().contains(_searchController.text.toLowerCase());
           }).toList();
 
-    // Apply filter tabs
     final displayChats = _applyFilter(filteredChats);
 
     if (displayChats.isEmpty) {
@@ -328,15 +304,12 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
   List<ChatModel> _applyFilter(List<ChatModel> chats) {
     switch (_selectedFilter) {
       case 'Recent Chats':
-        // Sort by most recent
         final sorted = List<ChatModel>.from(chats);
         sorted.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
         return sorted.take(10).toList();
       case 'Unread':
-        // Filter unread
         return chats.where((chat) => chat.unreadCount > 0).toList();
       case 'Groups':
-        // Filter groups
         return chats.where((chat) => chat.isGroup).toList();
       case 'All Chats':
       default:

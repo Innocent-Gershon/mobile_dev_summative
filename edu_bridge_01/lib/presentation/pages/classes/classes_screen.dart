@@ -510,20 +510,20 @@ class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin
                         Row(
                           children: [
                             Container(
-                              width: 56,
-                              height: 56,
+                              width: 60,
+                              height: 60,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.white.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  width: 1,
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                  width: 1.5,
                                 ),
                               ),
                               child: Center(
                                 child: Text(
                                   subject['icon'],
-                                  style: const TextStyle(fontSize: 28),
+                                  style: const TextStyle(fontSize: 30),
                                 ),
                               ),
                             ),

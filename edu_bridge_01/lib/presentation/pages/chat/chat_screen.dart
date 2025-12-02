@@ -264,18 +264,41 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
               onTap: () {
                 setState(() => _selectedFilter = filter['name']!);
               },
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  gradient: isSelected
+                      ? const LinearGradient(
+                          colors: [AppColors.primary, AppColors.secondary],
+                        )
+                      : null,
+                  color: isSelected ? null : Colors.transparent,
                   borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF475569)
+                            : AppColors.border.withValues(alpha: 0.3)),
+                    width: 0.5,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Text(
                   filter['name']!,
                   style: TextStyle(
                     color: isSelected ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppColors.textPrimary),
                     fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),

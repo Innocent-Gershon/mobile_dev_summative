@@ -334,13 +334,13 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
+            color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
         border: Border.all(
-          color: isDark ? const Color(0xFF475569) : AppColors.border.withOpacity(0.5),
+          color: isDark ? const Color(0xFF475569) : AppColors.border.withValues(alpha: 0.5),
           width: 0.5,
         ),
       ),
@@ -372,7 +372,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                             border: Border.all(color: Colors.white, width: 2),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.4),
+                                color: AppColors.primary.withValues(alpha: 0.4),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -415,8 +415,8 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: chat.unreadCount > 0
-                                  ? AppColors.primary.withOpacity(0.1)
-                                  : (isDark ? const Color(0xFF475569) : AppColors.textSecondary.withOpacity(0.1)),
+                                  ? AppColors.primary.withValues(alpha: 0.1)
+                                  : (isDark ? const Color(0xFF475569) : AppColors.textSecondary.withValues(alpha: 0.1)),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -440,7 +440,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                               margin: const EdgeInsets.only(right: 6),
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: AppColors.accent.withOpacity(0.2),
+                                color: AppColors.accent.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Icon(
@@ -457,7 +457,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                               style: TextStyle(
                                 fontSize: 14,
                                 color: chat.unreadCount > 0
-                                    ? (isDark ? Colors.white.withOpacity(0.9) : AppColors.textPrimary)
+                                    ? (isDark ? Colors.white.withValues(alpha: 0.9) : AppColors.textPrimary)
                                     : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                                 fontWeight: chat.unreadCount > 0
                                     ? FontWeight.w500
@@ -476,7 +476,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: isDark ? const Color(0xFF64748B) : AppColors.textSecondary.withOpacity(0.5),
+                  color: isDark ? const Color(0xFF64748B) : AppColors.textSecondary.withValues(alpha: 0.5),
                   size: 20,
                 ),
               ],
@@ -499,13 +499,13 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.8),
-            AppColors.secondary.withOpacity(0.6),
+            AppColors.primary.withValues(alpha: 0.8),
+            AppColors.secondary.withValues(alpha: 0.6),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -586,14 +586,14 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.primary.withOpacity(0.1),
-                  AppColors.secondary.withOpacity(0.05),
+                  AppColors.primary.withValues(alpha: 0.1),
+                  AppColors.secondary.withValues(alpha: 0.05),
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -628,7 +628,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.accent.withOpacity(0.4),
+                          color: AppColors.accent.withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -678,7 +678,7 @@ class _ChatScreenContentState extends State<_ChatScreenContent> {
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
                         ),

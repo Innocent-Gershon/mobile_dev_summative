@@ -275,7 +275,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/yourusername)
+- **Your Name** (Innocent, Samuel, Julio, Sarah and Abraham) - *Initial work* (Mobile App Application with flutter and Dart programming language) - [YourGitHub](https://github.com/Innocent-Gershon/mobile_dev_summative.git)
+
 
 ## 🙏 Acknowledgments
 

@@ -36,156 +36,282 @@ class ClassesView extends StatefulWidget {
   State<ClassesView> createState() => _ClassesViewState();
 }
 
-class _ClassesViewState extends State<ClassesView> {
+class _ClassesViewState extends State<ClassesView> with TickerProviderStateMixin {
   bool _isSearching = false;
   final _searchController = TextEditingController();
-  // String _searchQuery = ''; // Removed unused field
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  String _searchQuery = '';
+  
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
+    _animationController.forward();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F5),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F5),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: 80,
+        toolbarHeight: 90,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark 
+                ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                : [const Color(0xFFF8F9FA), const Color(0xFFE2E8F0)],
+            ),
+          ),
+        ),
         title: Padding(
-          padding: const EdgeInsets.only(left: 4.0),
+          padding: const EdgeInsets.only(left: 4.0, top: 8.0),
           child: BlocBuilder<LanguageBloc, LanguageState>(
             builder: (context, languageState) {
-              return Text(
-                widget.parentChildName != null ? '${widget.parentChildName}\'s Assignments' : AppLocalizations.translate(context, 'classes'),
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
-                  letterSpacing: -0.5,
-                ),
+              return AnimatedBuilder(
+                animation: _fadeAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _fadeAnimation.value,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.parentChildName != null ? '${widget.parentChildName}\'s Classes' : AppLocalizations.translate(context, 'classes'),
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF1A202C),
+                            letterSpacing: -0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Explore your subjects',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey[850] : Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: Icon(_isSearching ? Icons.close : Icons.search, color: isDark ? Colors.white : Colors.black, size: 24),
-              onPressed: () {
-                setState(() {
-                  _isSearching = !_isSearching;
-                  if (!_isSearching) {
-                    // _searchQuery = ''; // Removed unused field
-                    _searchController.clear();
-                  }
-                });
-              },
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey[850] : Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                return IconButton(
-                  icon: Icon(Icons.add, color: isDark ? Colors.white : Colors.black, size: 24),
-                  onPressed: () async {
-                    if (state is AuthAuthenticated && state.userType == 'Teacher') {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreateAssignmentScreen(),
+          AnimatedBuilder(
+            animation: _fadeAnimation,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _fadeAnimation.value,
+                child: Row(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 8, top: 8),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF334155) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            _isSearching ? Icons.close_rounded : Icons.search_rounded,
+                            key: ValueKey(_isSearching),
+                            color: isDark ? Colors.white : const Color(0xFF475569),
+                            size: 22,
+                          ),
                         ),
-                      );
-                      if (result == true && mounted) {
-                        context.read<ClassesBloc>().add(RefreshClasses());
-                      }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Only teachers can create assignments'),
-                          backgroundColor: Colors.orange,
+                        onPressed: () {
+                          setState(() {
+                            _isSearching = !_isSearching;
+                            if (!_isSearching) {
+                              _searchQuery = '';
+                              _searchController.clear();
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(right: 16, top: 8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark 
+                            ? [const Color(0xFF3B82F6), const Color(0xFF1E40AF)]
+                            : [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
                         ),
-                      );
-                    }
-                  },
-                );
-              },
-            ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          return IconButton(
+                            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                            onPressed: () async {
+                              if (state is AuthAuthenticated && state.userType == 'Teacher') {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const CreateAssignmentScreen(),
+                                  ),
+                                );
+                                if (result == true && mounted) {
+                                  context.read<ClassesBloc>().add(RefreshClasses());
+                                }
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('Only teachers can create assignments'),
+                                    backgroundColor: Colors.orange.shade600,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_isSearching)
-            Container(
-              margin: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey[850] : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.translate(context, 'search_classes'),
-                  hintStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF8E8E93)),
-                  prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF8E8E93)),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                onChanged: (value) {
-                  // setState(() => _searchQuery = value); // Removed unused functionality
-                },
-              ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-              child: BlocBuilder<LanguageBloc, LanguageState>(
-                builder: (context, languageState) {
-                  return Text(
-                    AppLocalizations.translate(context, 'track_projects'),
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF8E8E93),
-                      fontWeight: FontWeight.w400,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _isSearching
+              ? Container(
+                  key: const ValueKey('search'),
+                  margin: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      width: 1.5,
                     ),
-                  );
-                },
-              ),
-            ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF1A202C),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Search subjects and assignments...',
+                      hintStyle: TextStyle(
+                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                        fontSize: 16,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                        size: 22,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                    ),
+                    onChanged: (value) {
+                      setState(() => _searchQuery = value.toLowerCase());
+                    },
+                  ),
+                )
+              : Container(
+                  key: const ValueKey('header'),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isDark 
+                              ? [const Color(0xFF3B82F6), const Color(0xFF1E40AF)]
+                              : [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.school_rounded, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Your Learning Journey',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF1A202C),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Track progress across all subjects',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+          ),
           Expanded(
             child: _buildSubjectCards(context, isDark),
           ),
@@ -200,153 +326,357 @@ class _ClassesViewState extends State<ClassesView> {
         'name': 'Mathematics',
         'icon': '📊',
         'color': const Color(0xFF3B82F6),
-        'description': 'Numbers, equations, and problem solving'
+        'description': 'Numbers, equations, and problem solving',
+        'assignments': 12,
+        'completed': 8,
+        'gradient': [const Color(0xFF3B82F6), const Color(0xFF1E40AF)],
       },
       {
         'name': 'General Knowledge',
         'icon': '🌍',
         'color': const Color(0xFF10B981),
-        'description': 'Science, history, and world facts'
+        'description': 'Science, history, and world facts',
+        'assignments': 8,
+        'completed': 6,
+        'gradient': [const Color(0xFF10B981), const Color(0xFF059669)],
+      },
+      {
+        'name': 'English Literature',
+        'icon': '📚',
+        'color': const Color(0xFF8B5CF6),
+        'description': 'Reading, writing, and language arts',
+        'assignments': 10,
+        'completed': 7,
+        'gradient': [const Color(0xFF8B5CF6), const Color(0xFF7C3AED)],
+      },
+      {
+        'name': 'Science',
+        'icon': '🔬',
+        'color': const Color(0xFFF59E0B),
+        'description': 'Physics, chemistry, and biology',
+        'assignments': 15,
+        'completed': 9,
+        'gradient': [const Color(0xFFF59E0B), const Color(0xFFD97706)],
       },
     ];
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: subjects.length,
-      itemBuilder: (context, index) {
-        final subject = subjects[index];
-        return _buildSubjectCard(context, subject, isDark);
+    // Filter subjects based on search query
+    final filteredSubjects = _searchQuery.isEmpty
+        ? subjects
+        : subjects.where((subject) => 
+            subject['name'].toString().toLowerCase().contains(_searchQuery) ||
+            subject['description'].toString().toLowerCase().contains(_searchQuery)
+          ).toList();
+
+    if (filteredSubjects.isEmpty && _searchQuery.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 64,
+              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No subjects found',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try searching with different keywords',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AnimatedBuilder(
+      animation: _slideAnimation,
+      builder: (context, child) {
+        return SlideTransition(
+          position: _slideAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: filteredSubjects.length,
+              itemBuilder: (context, index) {
+                final subject = filteredSubjects[index];
+                return AnimatedContainer(
+                  duration: Duration(milliseconds: 200 + (index * 100)),
+                  child: _buildSubjectCard(context, subject, isDark, index),
+                );
+              },
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildSubjectCard(BuildContext context, Map<String, dynamic> subject, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: subject['color'],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.15), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(12),
+  Widget _buildSubjectCard(BuildContext context, Map<String, dynamic> subject, bool isDark, int index) {
+    final progress = (subject['completed'] as int) / (subject['assignments'] as int);
+    
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 800 + (index * 200)),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 28),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: subject['gradient'] as List<Color>,
                 ),
-                child: Center(
-                  child: Text(
-                    subject['icon'],
-                    style: const TextStyle(fontSize: 26),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: (subject['color'] as Color).withValues(alpha: 0.35),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -2,
                   ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      subject['name'],
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subject['description'],
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                // Check if user is parent and restrict access
-                final authState = context.read<AuthBloc>().state;
-                if (authState is AuthAuthenticated && authState.userType == 'Parent') {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Parents can view assignments but cannot access detailed class management'),
-                      backgroundColor: Colors.orange,
-                      action: SnackBarAction(
-                        label: 'OK',
-                        textColor: Colors.white,
-                        onPressed: () {},
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SubjectAssignmentsScreen(
-                      subject: subject['name'],
-                      parentChildName: widget.parentChildName,
-                    ),
-                  ),
-                );
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.2),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'View Assignments',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward,
-                    size: 17,
-                    color: Colors.white,
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                    spreadRadius: -4,
                   ),
                 ],
               ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () {
+                    final authState = context.read<AuthBloc>().state;
+                    if (authState is AuthAuthenticated && authState.userType == 'Parent') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Parents can view assignments but cannot access detailed class management'),
+                          backgroundColor: Colors.orange.shade600,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          action: SnackBarAction(
+                            label: 'OK',
+                            textColor: Colors.white,
+                            onPressed: () {},
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => SubjectAssignmentsScreen(
+                          subject: subject['name'],
+                          parentChildName: widget.parentChildName,
+                        ),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(1.0, 0.0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeInOutCubic,
+                            )),
+                            child: child,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  subject['icon'],
+                                  style: const TextStyle(fontSize: 30),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    subject['name'],
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    subject['description'],
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white.withValues(alpha: 0.85),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Text(
+                                '${subject['assignments']} tasks',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Progress',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white.withValues(alpha: 0.9),
+                                        ),
+                                      ),
+                                      Text(
+                                        '${subject['completed']}/${subject['assignments']}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TweenAnimationBuilder<double>(
+                                    duration: Duration(milliseconds: 1000 + (index * 200)),
+                                    tween: Tween(begin: 0.0, end: progress),
+                                    builder: (context, animatedProgress, child) {
+                                      return Stack(
+                                        children: [
+                                          Container(
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.25),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                          ),
+                                          FractionallySizedBox(
+                                            widthFactor: animatedProgress,
+                                            child: Container(
+                                              height: 8,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(4),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.white.withValues(alpha: 0.6),
+                                                    blurRadius: 6,
+                                                    spreadRadius: 1,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 }
